@@ -8,7 +8,6 @@ import os
 client = Client()
 client.login("train-kanto.f5.si", os.getenv("passward"))
 
-
 train_data = requests.get("https://ntool.online/data/train_all.json").json()
 kanto = train_data['data']['4']
 
@@ -25,12 +24,15 @@ while True:
     minutes = current_time.tm_min
     print(minutes)
 
-    if minutes in [0, 15, 30, 45]:
+    if minutes in [0, 15, 30, 54 ,45]:
         for i in kanto:
             if i["status"] != "平常運転":
                 railName.append(i["railName"])
                 status.append(i["status"])
                 railCode.append(i["railCode"])
+
+        emojidict = {"列車遅延": "🕒", "運転見合わせ": "🛑", "運転情報": "ℹ️", "運転状況": "ℹ️", "その他":"⚠️"}
+        status = [emojidict[data] + data for data in status]
 
         for i in railCode:
             info_sourse = requests.get(f"https://transit.yahoo.co.jp/diainfo/{i}/0").text
