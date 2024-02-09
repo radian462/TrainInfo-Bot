@@ -33,14 +33,11 @@ while True:
 
         for i in railCode:
             info_sourse = requests.get(f"https://transit.yahoo.co.jp/diainfo/{i}/0").text
-            if info_sourse in '<dt><span class="icnNormalLarge"></span>平常運転</dt>':
-              number = railCode.index(i)
-              del railName[number]
-              del status[number]
-              del railCode[number]
-            else:
-              info_sourse = re.search(r'<dd class="trouble"><p>(.*?)<span>', info_sourse)
+            info_sourse = re.search(r'<dd class="trouble"><p>(.*?)<span>', info_sourse)
+            if info_sourse is not None:
               info.append(info_sourse.group(1))
+            else:
+              info.append("詳細の取得に失敗しました")
 
         message = ""
         if railName == []:
