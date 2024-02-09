@@ -1,7 +1,13 @@
+from atproto import Client
 import requests
 import re
 import time
 import datetime
+import os
+
+client = Client()
+client.login("train-bot.f5.si", os.getenv("passward"))
+
 
 train_data = requests.get("https://ntool.online/data/train_all.json").json()
 kanto = train_data['data']['4']
@@ -18,7 +24,7 @@ while True:
     minutes = current_time.tm_min
     print(minutes)
 
-    if minutes in [0, 15, 30, 45]:
+    if minutes in [0, 15, 30, 45,56]:
         for i in kanto:
             if i["status"] != "平常運転":
                 railName.append(i["railName"])
@@ -43,6 +49,5 @@ while True:
           for i in range(len(railName)):
               message += f"{railName[i]}:{status[i]}\n{info[i]}\n\n"
 
-        print(message)
-      
+    client.send_post(text=message)
     time.sleep(60)

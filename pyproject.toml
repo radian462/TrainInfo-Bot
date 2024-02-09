@@ -9,6 +9,7 @@ python = ">=3.10.0,<3.11"
 requests = "^2.31.0"
 beautifulsoup4 = "^4.12.3"
 xmltodict = "^0.13.0"
+atproto = "^0.0.40"
 
 [tool.pyright]
 # https://github.com/microsoft/pyright/blob/main/docs/configuration.md
