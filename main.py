@@ -24,7 +24,7 @@ while True:
     minutes = current_time.tm_min
     print(minutes)
 
-    if minutes in [0, 15, 30, 54 ,45]:
+    if minutes in [0, 15, 30, 54 ,45 ,20]:
         for i in kanto:
             if i["status"] != "平常運転":
                 railName.append(i["railName"])
@@ -53,6 +53,9 @@ while True:
         else:
           for i in range(len(railName)):
               message += f"{railName[i]} : {status[i]}\n{info[i]}\n\n"
+
+        while message.endswith('\n'):
+          message= message[:-1]
             
         if old_message != message:
           client.send_post(text=message)
