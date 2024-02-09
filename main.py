@@ -24,7 +24,7 @@ while True:
     minutes = current_time.tm_min
     print(minutes)
 
-    if minutes in [0, 15, 30, 54 ,45 ,20]:
+    if minutes in [0, 15, 30, 45]:
         for i in kanto:
             if i["status"] != "平常運転":
                 railName.append(i["railName"])
