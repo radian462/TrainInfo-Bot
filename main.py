@@ -6,7 +6,7 @@ import datetime
 import os
 
 client = Client()
-client.login("train-bot.f5.si", os.getenv("passward"))
+client.login("train-kanto.f5.si", os.getenv("passward"))
 
 
 train_data = requests.get("https://ntool.online/data/train_all.json").json()
@@ -37,6 +37,11 @@ while True:
             info_sourse = re.search(r'<dd class="trouble"><p>(.*?)<span>', info_sourse)
             if info_sourse is not None:
               info.append(info_sourse.group(1))
+            elif '<dt><span class="icnNormalLarge"></span>平常運転</dt>' in info_sourse:
+                number = railCode.index(i)
+                del railName[number]
+                del status[number]
+                del railCode[number]
             else:
               info.append("詳細の取得に失敗しました")
 
