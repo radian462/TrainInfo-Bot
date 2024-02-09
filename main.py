@@ -15,6 +15,7 @@ kanto = train_data['data']['4']
 second = datetime.datetime.now().time().second
 time.sleep(60 - second)
 
+old_message = ""
 while True:
     railName = []
     status = []
@@ -44,8 +45,13 @@ while True:
             message = "関東の電車は全て正常に動いています"
         else:
           for i in range(len(railName)):
-              message += f"{railName[i]}:{status[i]}\n{info[i]}\n\n"
-
-        client.send_post(text=message)
+              message += f"{railName[i]} : {status[i]}\n{info[i]}\n\n"
+            
+        if old_message != message:
+          client.send_post(text=message)
+        else:
+          client.send_post(text="電車の運行状況に変化はありません")
+          
+        old_message = message
     
     time.sleep(60)
