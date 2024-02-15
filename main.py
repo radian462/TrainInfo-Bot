@@ -114,8 +114,22 @@ while True:
 
     if minutes in [0,10,20,30,40,50,60]:
       message = make_message()
-      print(message)
-      post = client.send_post(text=message)
+      message_list = [] 
+      sentence = "" 
+
+      for i in re.split(r"(?<=\n\n)", message): 
+        if len(sentence) + len(i) <= 300: 
+          sentence += i 
+        else: 
+          message_list.append(sentence) 
+          sentence = i 
+
+      message_list.append(sentence) 
+      
+      for i in message_list: 
+        print(len(i))
+        post = client.send_post(text=i)
+        
       r.set("kanto_train_uri", post.uri)
   
-    time.sleep(60)
+    time.sleep(60-datetime.datetime.now().time().second)
