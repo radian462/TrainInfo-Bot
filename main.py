@@ -112,7 +112,7 @@ while True:
     minutes = current_time.tm_min
     print(minutes)
 
-    if minutes in [0,10,20,30,40,50,60,21,22,23]:
+    if minutes in [0,10,20,30,40,50,60]:
       message = make_message()
       print(message)
       post = client.send_post(text=message)
