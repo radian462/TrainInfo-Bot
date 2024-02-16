@@ -138,7 +138,8 @@ while True:
 
       for m in message_list:
         if message_list.index(m) == 0:  
-          root_post_ref = models.create_strong_ref(client.send_post(m))
+          post = client.send_post(m)
+          root_post_ref = models.create_strong_ref(post)
         elif message_list.index(m) == 1:
           reply_to_root = models.create_strong_ref(
               client.send_post(
@@ -154,7 +155,7 @@ while True:
               )
           )
 
-      r.set("kanto_train_uri", root_post_ref.uri)
+      r.set("kanto_train_uri", post.uri)
       fixed_post()
       
     time.sleep(60-datetime.datetime.now().time().second)
