@@ -132,6 +132,8 @@ while True:
       message_list.append(sentence) 
       
       for i in message_list: 
+        while i.endswith('\n'):
+          i = i[:-1]
         print(len(i))
         post = client.send_post(text=i)
         
