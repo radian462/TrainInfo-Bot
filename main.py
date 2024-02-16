@@ -1,4 +1,4 @@
-from atproto import Client
+from atproto import Client,models
 import time
 import datetime
 import requests
@@ -135,8 +135,25 @@ while True:
         while i.endswith('\n'):
           i = i[:-1]
         print(len(i))
-        post = client.send_post(text=i)
-        
+
+      for m in message_list:
+        if message_list.index(m) == 0:  
+          root_post_ref = models.create_strong_ref(client.send_post(m))
+        elif message_list.index(m) == 1:
+          reply_to_root = models.create_strong_ref(
+              client.send_post(
+                  text= m,
+                  reply_to=models.AppBskyFeedPost.ReplyRef(parent=root_post_ref,root=root_post_ref),
+              )
+          )
+        else:
+          reply_to_root = models.create_strong_ref(
+              client.send_post(
+                  text= m,
+                  reply_to=models.AppBskyFeedPost.ReplyRef(parent=reply_to_root,root=root_post_ref),
+              )
+          )
+
       r.set("kanto_train_uri", post.uri)
       fixed_post()
       
