@@ -154,7 +154,7 @@ while True:
               )
           )
 
-      r.set("kanto_train_uri", post.uri)
+      r.set("kanto_train_uri", root_post_ref.uri)
       fixed_post()
       
     time.sleep(60-datetime.datetime.now().time().second)
