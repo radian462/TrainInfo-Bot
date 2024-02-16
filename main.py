@@ -107,6 +107,11 @@ def make_message():
 
   return message
 
+def fixed_post():
+  client.unrepost("at://did:plc:f2nbethp4g7xfdthyv2wipjo/app.bsky.feed.post/3klilixvsvt2n")
+  client.repost("at://did:plc:f2nbethp4g7xfdthyv2wipjo/app.bsky.feed.post/3klilixvsvt2n","bafyreiad7x4f3jbozjyhn4uz63nqspqqwr4jwemie5j7bzzctniw7x52m4")
+
+
 while True:
     current_time = time.localtime()
     minutes = current_time.tm_min
@@ -131,5 +136,6 @@ while True:
         post = client.send_post(text=i)
         
       r.set("kanto_train_uri", post.uri)
-  
+      fixed_post()
+      
     time.sleep(60-datetime.datetime.now().time().second)
