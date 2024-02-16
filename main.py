@@ -33,7 +33,7 @@ def get_traindata():
   status = re.findall(r'>(.*?)</font></strong></font></td>', site_data)
   info = re.findall(r'<td height="40"><font size="-1">(.*?)</font></td>', site_data)
 
-  emojidict = {"列車遅延": "🕒列車遅延", "運転見合わせ": "🛑運転見合わせ", "運転情報": "ℹ️運転情報", "運転状況": "ℹ️運転状況", "運転再開":"🚋運転再開","平常運転":"🚋平常運転","その他":"⚠️その他"}
+  emojidict = {"列車遅延": "🕒列車遅延", "運転見合わせ": "🛑運転見合わせ", "運転情報": "ℹ️運転情報", "運転状況": "ℹ️運転状況", "運転再開":"🚋運転再開","平常運転":"🚋平常運転","運転計画":"🗒️運転計画","その他":"⚠️その他"}
 
   status = [emojidict.get(s, emojidict["その他"]) for s in status]
   data = [{"train": t, "status": s, "info": i} for t, s, i in zip(train, status, info)]
@@ -85,14 +85,6 @@ def make_message():
       t = data_trains.index(train)
       if olddata == newdata:
           message = "運行状況に変更はありません。"
-          uri = r.get('kanto_train_uri').decode('utf-8').strip('"') 
-          post_data = client.get_posts([uri])
-          try:
-            post_text = re.search(r"text='(.*?)'", str(post_data)).group(1)
-            if post_text == message:
-              client.delete_post(uri)
-          except:
-            pass
       else:
         if data == []:
           message = "関東の電車は全て正常に動いています"
@@ -104,6 +96,15 @@ def make_message():
 
   while message.endswith('\n'):
     message= message[:-1]
+
+  uri = r.get('kanto_train_uri').decode('utf-8').strip('"') 
+  post_data = client.get_posts([uri])
+  try:
+    post_text = re.search(r"text='(.*?)'", str(post_data)).group(1)
+    if post_text == "運行状況に変更はありません。":
+      client.delete_post(uri)
+  except:
+    pass
 
   return message
 
