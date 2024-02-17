@@ -110,7 +110,7 @@ def make_message():
 
 def fixed_post():
   client.unrepost("at://did:plc:f2nbethp4g7xfdthyv2wipjo/app.bsky.feed.post/3kll3rn7pxc2d")
-  client.repost("at://did:plc:f2nbethp4g7xfdthyv2wipjo/app.bsky.feed.post/3klilixvsvt2n","bafyreighsjmd5rqmjctw27nh5atmbfxlgwfcpl46yh4nkdakzu3h2yvycq")
+  client.repost("at://did:plc:f2nbethp4g7xfdthyv2wipjo/app.bsky.feed.post/3kll3rn7pxc2d","bafyreighsjmd5rqmjctw27nh5atmbfxlgwfcpl46yh4nkdakzu3h2yvycq")
 
 
 while True:
