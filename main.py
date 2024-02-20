@@ -38,7 +38,7 @@ def get_traindata():
     response = re.sub(" ","",response)
     response = re.sub("\n","#",response)
 
-    site_data = re.search(r'<h1class="p-header-category-current-title">関東</h1>(.*?)<divclass="layout-contents__sidebar">', response).group(1)
+    site_data = re.search(r'<h1class="p-header-category-current-title">(.*?)<divclass="layout-contents__sidebar">', response).group(1)
     site_data = re.sub("#" , "\n" , site_data)
 
     train = re.findall(r'(.*?)<spanclass="traffic-area-wrap-mass__info--', site_data)
