@@ -23,26 +23,39 @@ time.sleep(60 - second)
 old_message = ""
 
 def get_traindata():
-  site_source = requests.get("https://mainichi.jp/traffic/etc/a.html").text
-  site_source = re.sub("\n" , "#" , site_source)
+  try:
+    site_source = requests.get("https://mainichi.jp/traffic/etc/a.html").text
+    site_source = re.sub("\n" , "#" , site_source)
 
-  site_data = re.search(r'関東エリア(.*?)<td colspan="3">', site_source).group(1)
-  site_data = re.sub("#" , "\n" , site_data)
+    site_data = re.search(r'関東エリア(.*?)<td colspan="3">', site_source).group(1)
+    site_data = re.sub("#" , "\n" , site_data)
 
-  train = re.findall(r'<td height="40"><font size="-1">(.*?)<BR><strong>', site_data)
-  status = re.findall(r'>(.*?)</font></strong></font></td>', site_data)
-  info = re.findall(r'<td height="40"><font size="-1">(.*?)</font></td>', site_data)
+    train = re.findall(r'<td height="40"><font size="-1">(.*?)<BR><strong>', site_data)
+    status = re.findall(r'>(.*?)</font></strong></font></td>', site_data)
+    info = re.findall(r'<td height="40"><font size="-1">(.*?)</font></td>', site_data)
+  except:
+    response = requests.get("https://www.yomiuri.co.jp/traffic/area04/").text
+    response = re.sub(" ","",response)
+    response = re.sub("\n","#",response)
+
+    site_data = re.search(r'<h1class="p-header-category-current-title">関東</h1>(.*?)<divclass="layout-contents__sidebar">', response).group(1)
+    site_data = re.sub("#" , "\n" , site_data)
+
+    train = re.findall(r'(.*?)<spanclass="traffic-area-wrap-mass__info--', site_data)
+    status = re.findall(r'">(.*?)</span>\n</h4>', site_data)
+    info = re.findall(r'<p>(.*?)</p>\n</article>',site_data)
 
   emojidict = {"列車遅延": "🕒列車遅延", "運転見合わせ": "🛑運転見合わせ", "運転情報": "ℹ️運転情報", "運転状況": "ℹ️運転状況", "運転再開":"🚋運転再開","平常運転":"🚋平常運転","運転計画":"🗒️運転計画","その他":"⚠️その他"}
 
   for i in range(len(status)):
     if "運転計画" in status[i]:
       status[i] = "運転計画"
-      
+
   status = [emojidict.get(s, emojidict["その他"]) for s in status]
   data = [{"train": t, "status": s, "info": i} for t, s, i in zip(train, status, info)]
 
   return data
+
 
 def merge_data(olddata,newdata):
   olddata_trains = [d["train"] for d in olddata]
