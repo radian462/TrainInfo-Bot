@@ -95,12 +95,12 @@ def merge_data(now, old):
 
 def make_message(data):
     message = ""
-    if data == []:
-        message = "現在、電車は全て正常に動いています"
-        return message
-
     if data == ["運行状況に変更はありません。"]:
         message = "運行状況に変更はありません。"
+        return message
+        
+    if data == []:
+        message = "現在、電車は全て正常に動いています"
         return message
 
     for d in data:
