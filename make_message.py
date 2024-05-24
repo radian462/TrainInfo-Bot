@@ -62,6 +62,10 @@ def data_upload(region,data):
 
 def merge_data(now, old):
     merged_data = []
+    if now == old:
+        merged_data = ["運行状況に変更はありません。"]
+        return merged_data
+        
     for d in now:
         old_entry = next((entry for entry in old if entry["train"] == d["train"]), None)
         if old_entry:
@@ -98,7 +102,7 @@ def make_message(data):
     if data == ["運行状況に変更はありません。"]:
         message = "運行状況に変更はありません。"
         return message
-        
+
     if data == []:
         message = "現在、電車は全て正常に動いています"
         return message
@@ -121,4 +125,6 @@ def load_data(region):
     return olddata
 
 if __name__ == "__main__":
-    get_traindata("kanto")
+    now = get_traindata("kanto")
+    old = load_data("kanto")
+    print(make_message(merge_data(now,old)))
