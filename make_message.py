@@ -62,19 +62,17 @@ def data_upload(region,data):
 
 def merge_data(now, old):
     merged_data = []
-    if now == old:
-        merged_data = ["運行状況に変更はありません。"]
-        return merged_data
     for d in now:
         old_entry = next((entry for entry in old if entry["train"] == d["train"]), None)
         if old_entry:
-            merged_dict = {
-                "train": d["train"],
-                "oldstatus": old_entry["status"],
-                "nowstatus": d["status"],
-                "info": d["info"]
-            }
-            merged_data.append(merged_dict)
+            if old_entry["status"] == d["status"] and d["status"] != "🚋平常運転":
+                merged_dict = {
+                    "train": d["train"],
+                    "oldstatus": old_entry["status"],
+                    "nowstatus": d["status"],
+                    "info": d["info"]
+                }
+                merged_data.append(merged_dict)
             old.remove(old_entry)
         else:
             merged_dict = {
