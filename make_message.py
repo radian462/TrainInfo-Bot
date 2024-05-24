@@ -69,14 +69,13 @@ def merge_data(now, old):
     for d in now:
         old_entry = next((entry for entry in old if entry["train"] == d["train"]), None)
         if old_entry:
-            if old_entry["status"] == d["status"] and d["status"] != "🚋平常運転":
-                merged_dict = {
-                    "train": d["train"],
-                    "oldstatus": old_entry["status"],
-                    "nowstatus": d["status"],
-                    "info": d["info"]
-                }
-                merged_data.append(merged_dict)
+            merged_dict = {
+                "train": d["train"],
+                "oldstatus": old_entry["status"],
+                "nowstatus": d["status"],
+                "info": d["info"]
+            }
+            merged_data.append(merged_dict)
             old.remove(old_entry)
         else:
             merged_dict = {
@@ -109,10 +108,10 @@ def make_message(data):
 
     for d in data:
         if d["oldstatus"] == d["nowstatus"]:
-            if not d["oldstatus"] == "🚋運転再開":
+            if d["oldstatus"] != "🚋平常運転":
                 message += f'{d["train"]} : {d["nowstatus"]}\n{d["info"]}\n\n'
         else:
-                message += f'{d["train"]} : {d["oldstatus"]} ➡️{d["nowstatus"]}\n{d["info"]}\n\n'
+            message += f'{d["train"]} : {d["oldstatus"]} ➡️{d["nowstatus"]}\n{d["info"]}\n\n'
 
     return message
 
@@ -124,7 +123,7 @@ def load_data(region):
     olddata = json.loads(olddata)
     return olddata
 
+
 if __name__ == "__main__":
-    now = get_traindata("kanto")
-    old = load_data("kanto")
     print(make_message(merge_data(now,old)))
+    
