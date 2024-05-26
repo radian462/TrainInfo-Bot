@@ -23,7 +23,7 @@ def post_bluesky(region,message):
     post_data = client.get_posts([uri])
     try:
         post_text = re.search(r"text='(.*?)'", str(post_data)).group(1)
-        if post_text == "運行状況に変更はありません。":
+        if post_text == "運行状況に変更はありません。" or post_text == "":
           client.delete_post(uri)
     except:
         pass
