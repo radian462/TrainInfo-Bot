@@ -65,7 +65,7 @@ def merge_data(now, old):
     if now == old:
         merged_data = ["運行状況に変更はありません。"]
         return merged_data
-        
+
     for d in now:
         old_entry = next((entry for entry in old if entry["train"] == d["train"]), None)
         if old_entry:
@@ -126,4 +126,3 @@ def load_data(region):
 
 if __name__ == "__main__":
     print(make_message(merge_data(now,old)))
-    

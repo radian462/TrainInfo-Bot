@@ -27,8 +27,10 @@ def post_bluesky(region,message):
     try:
         post_text = re.search(r"text='(.*?)'", str(post_data)).group(1)
         if post_text == "運行状況に変更はありません。" or post_text == "":
+            '''
             if message == "運行状況に変更はありません。" or message == "":
                 return
+            '''
             client.delete_post(uri)
     except:
         pass
@@ -79,27 +81,27 @@ def post_bluesky(region,message):
 def twitter_login(region):
     if region == "kanto":
         client = Client('ja')
-        if os.path.exists('kanto_cookies.json'):
-            client.load_cookies('kanto_cookies.json')
+        if os.path.exists('cookies/kanto_cookies.json'):
+            client.load_cookies('cookies/kanto_cookies.json')
         else:
             client.login(
                 auth_info_1= os.getenv("KANTO_TWITTER_EMAIL"),
                 auth_info_2= os.getenv("train_kanto_bot"), 
                 password= os.getenv("KANTO_TWITTER_PASSWORD")
             )
-        client.save_cookies('kanto_cookies.json')
+        client.save_cookies('cookies/kanto_cookies.json')
         print("twitter(関東)にログインしました")
     elif region == "kansai":
         client = Client('ja')
-        if os.path.exists('kansai_cookies.json'):
-            client.load_cookies('kansai_cookies.json')
+        if os.path.exists('cookies/kansai_cookies.json'):
+            client.load_cookies('cookies/kansai_cookies.json')
         else:
             client.login(
                 auth_info_1= os.getenv("KANSAI_TWITTER_EMAIL"),
                 auth_info_2= os.getenv("train_kansai_bo"), 
                 password= os.getenv("KANSAI_TWITTER_PASSWORD")
             )
-        client.save_cookies('kansai_cookies.json')
+        client.save_cookies('cookies/kansai_cookies.json')
         print("twitter(関西)にログインしました")
     return client
 
@@ -115,8 +117,10 @@ def twitter_tweet(region,message):
         tweet = client.get_tweet_by_id(tweet_id)
         tweet_text = tweet.text
         if tweet_text in "運行状況に変更はありません。" or tweet_text == "":
+            '''
             if message in "運行状況に変更はありません。" or message == "":
                 return
+            '''
             tweet.delete()
     except:
         pass
