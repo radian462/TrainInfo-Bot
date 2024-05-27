@@ -24,10 +24,12 @@ def post_bluesky(region,message):
     try:
         post_text = re.search(r"text='(.*?)'", str(post_data)).group(1)
         if post_text == "運行状況に変更はありません。" or post_text == "":
-          client.delete_post(uri)
+            if message == "運行状況に変更はありません。" or message == "":
+                return
+            client.delete_post(uri)
     except:
         pass
-      
+
     message_list = [] 
     sentence = ""
     for i in re.split(r"(?<=\n\n)", message): 
@@ -58,7 +60,7 @@ def post_bluesky(region,message):
             )
         )
 
-    
+
     if region == "kanto":
       r.set("kanto_train_uri", post.uri)
       client.unrepost("at://did:plc:f2nbethp4g7xfdthyv2wipjo/app.bsky.feed.post/3klqfg7fbia2z")
@@ -67,5 +69,5 @@ def post_bluesky(region,message):
       r.set("kansai_train_uri", post.uri)
       client.unrepost("at://did:plc:hpioxwkkbmbexev43wjiti4d/app.bsky.feed.post/3klqfxniufh2s")
       client.repost("at://did:plc:hpioxwkkbmbexev43wjiti4d/app.bsky.feed.post/3klqfxniufh2s","bafyreidwie6e2qifxhcd4rketu3dsqmqf3ynshithkwtg6l54zmrvsxwjq")
-    
+
     print(f"Blueskyに{region}の鉄道情報の投稿に成功しました")
