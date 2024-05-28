@@ -1,5 +1,4 @@
-from atproto import Client,models
-from twikit import Client
+import atproto
 import twikit
 import os
 import random
@@ -15,7 +14,7 @@ r = redis.Redis(
 )
 
 def post_bluesky(region,message):
-    client = Client()
+    client = atproto.Client()
     if region == "kanto":
         client.login("train-kanto.f5.si", os.getenv("BLUESKY_PASS_KANTO"))
         uri = r.get("kanto_train_uri").strip('"') 
@@ -49,19 +48,19 @@ def post_bluesky(region,message):
     for m in message_list:
       if message_list.index(m) == 0:  
         post = client.send_post(m)
-        root_post_ref = models.create_strong_ref(post)
+        root_post_ref = atproto.models.create_strong_ref(post)
       elif message_list.index(m) == 1:
-        reply_to_root = models.create_strong_ref(
+        reply_to_root = atproto.models.create_strong_ref(
             client.send_post(
                 text= m,
-                reply_to=models.AppBskyFeedPost.ReplyRef(parent=root_post_ref,root=root_post_ref),
+                reply_to=atproto.models.AppBskyFeedPost.ReplyRef(parent=root_post_ref,root=root_post_ref),
             )
         )
       else:
-        reply_to_root = models.create_strong_ref(
+        reply_to_root = atproto.models.create_strong_ref(
             client.send_post(
                 text= m,
-                reply_to=models.AppBskyFeedPost.ReplyRef(parent=reply_to_root,root=root_post_ref),
+                reply_to=atproto.models.AppBskyFeedPost.ReplyRef(parent=reply_to_root,root=root_post_ref),
             )
         )
 
@@ -79,8 +78,8 @@ def post_bluesky(region,message):
 
 
 def twitter_login(region):
+    client = twikit.Client('ja')
     if region == "kanto":
-        client = Client('ja')
         if os.path.exists('cookies/kanto_cookies.json'):
             client.load_cookies('cookies/kanto_cookies.json')
         else:
@@ -92,7 +91,6 @@ def twitter_login(region):
         client.save_cookies('cookies/kanto_cookies.json')
         print("twitter(関東)にログインしました")
     elif region == "kansai":
-        client = Client('ja')
         if os.path.exists('cookies/kansai_cookies.json'):
             client.load_cookies('cookies/kansai_cookies.json')
         else:
