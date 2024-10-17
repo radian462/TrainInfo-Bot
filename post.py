@@ -67,12 +67,8 @@ def post_bluesky(region,message):
 
     if region == "kanto":
       r.set("kanto_train_uri", post.uri)
-      client.unrepost("at://did:plc:f2nbethp4g7xfdthyv2wipjo/app.bsky.feed.post/3klqfg7fbia2z")
-      client.repost("at://did:plc:f2nbethp4g7xfdthyv2wipjo/app.bsky.feed.post/3klqfg7fbia2z","bafyreidpslbv6vp3ghpyw7c74s7hhkc7coylelzq24dfvyo5ghcnqgplwi")
     elif region == "kansai":
       r.set("kansai_train_uri", post.uri)
-      client.unrepost("at://did:plc:hpioxwkkbmbexev43wjiti4d/app.bsky.feed.post/3klqfxniufh2s")
-      client.repost("at://did:plc:hpioxwkkbmbexev43wjiti4d/app.bsky.feed.post/3klqfxniufh2s","bafyreidwie6e2qifxhcd4rketu3dsqmqf3ynshithkwtg6l54zmrvsxwjq")
 
     print(f"Blueskyに{region}の鉄道情報の投稿に成功しました")
 
