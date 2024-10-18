@@ -1,24 +1,24 @@
-import make_message as m
-import post as p
-import time
-import datetime
+from atproto import Client
+import requests
+import redis
 
-interval = 10
+class train_info:
+    def __init__(self):
+        self.region = "関東"
+        self.bluesky_name = ""
+        self.bluesky_pass = ""
+        self.redis_host = ""
+        self.redis_port = ""
+        self.redis_pass = ""
+        self.r = redis.Redis(
+            host = self.redis_host,
+            port = self.redis_port,
+            password= self.redis_pass,
+            ssl=True,
+            decode_responses=True
+        )
 
-while True:
-    current_time = time.localtime()
-    minutes = current_time.tm_min
-  
-    if minutes % interval == 0:
-        for r in ("kanto","kansai"):
-            old = m.load_data(r)
-            new = m.get_traindata(r)
-            m.data_upload(r,new)
-            merged = m.merge_data(new,old)
-            message = m.make_message(merged)
-            p.post_bluesky(r,message)
-            p.twitter_tweet(r,message)
+        self.client = Client()
+        self.client.login(self.bluesky_name, self.bluesky_pass)
 
-    wait_time = 60 - datetime.datetime.now().time().second
-    print(f"{wait_time}秒待機します")
-    time.sleep(wait_time)
+    
