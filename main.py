@@ -33,6 +33,7 @@ class TrainInfo:
         regions = {"関東":"4","関西":"6"}
         url = f"https://www.nhk.or.jp/n-data/traffic/train/traininfo_area_0{regions[self.region]}.json"
         response = requests.get(url)
+
         if response.status_code == 200:
             original_data = response.json()['channel']['item'] + response.json()['channel']['itemLong']
 
@@ -58,9 +59,52 @@ class TrainInfo:
             
             data = [{"train": t, "status": s, "detail": d} for t, s, d in zip(train, status, detail)]
 
-        return data
-                
+        status_emoji = {
+            "平常運転": "🚋",
+            "運転再開": "🚋",
+            "運転計画": "🗒️",
+            "運転情報": "ℹ️",
+            "運転状況": "ℹ️",
+            "列車遅延": "🕒",
+            "運転見合わせ": "🛑",
+            "その他": "⚠️",
+        }
+        
+        for d in data:
+            for key in status_emoji.keys():
+                if key in d['status']:
+                    d['status'] = status_emoji[key] + key
 
+        return data
+
+    def make_message(self,data):
+        db_region = {"関東":"kanto_train_test","関西":"kansai_train_test"}
+        
+        old = json.loads(self.r.get(db_region[self.region]))
+        trains = set([d["train"] for d in data] + [d["train"] for d in old])
+        
+        merged = [
+            {
+                "train": t,
+                "oldstatus": (next((o['status'] for o in old if o['train'] == t), '🚋平常運転')),
+                "newstatus": (next((d['status'] for d in data if d['train'] == t), '🚋平常運転')),
+                "detail": (next((d['detail'] for d in data if d['train'] == t), '現在、ほぼ平常通り運転しています。'))
+            }
+            for t in trains
+        ]
+    
+        #変更点があるものを前に
+        merged = [m for m in merged if m['oldstatus'] != m['newstatus']] + [m for m in merged if m['oldstatus'] == m['newstatus']]
+        
+        messages = []
+        for m in merged:
+            if m['newstatus'] == m['oldstatus']:
+                messages.append(f"{m['train']} : {m['newstatus']}\n{m['detail']}")
+            else:
+                messages.append(f"{m['train']} : {m['oldstatus']}➡️{m['newstatus']}\n{m['detail']}")
+         
+        #self.r.set(db_region[self.region],json.dumps(data))
+        return messages
 
 kanto = TrainInfo(
     "関東",
@@ -69,4 +113,5 @@ kanto = TrainInfo(
     r
 )
 
-print(kanto.request())
+data = kanto.request()
+print(kanto.make_message(data))
