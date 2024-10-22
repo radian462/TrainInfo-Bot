@@ -58,8 +58,7 @@ class TrainInfo:
     def request(self):
         url = f"https://www.nhk.or.jp/n-data/traffic/train/traininfo_area_0{self.region_data[self.region]["id"]}.json"
         response = requests.get(url)
-        print(url)
-
+       
         if response.status_code == 200:
             original_data = (
                 response.json()["channel"]["item"]
@@ -174,14 +173,13 @@ class TrainInfo:
             messages_list = messages
         else:
             for m in messages:
-                if len(processing_message + m + "\n\n") <= 300:
+                if len(processing_message + m + "\n\n") < 300:
                     processing_message += m + "\n\n"
                 else:
-                    messages_list.append(processing_message.rstrip("\n\n"))
+                    messages_list.append(processing_message)
                     processing_message = m + "\n\n"
+            messages_list.append(processing_message)
 
-                messages_list.append(processing_message.rstrip("\n\n"))
-                
         if service == "Bluesky":
             latest_post = (
                 self.client.get_author_feed(actor=self.bluesky_name, limit=1)
@@ -235,3 +233,11 @@ class TrainInfo:
             time.sleep(wait_time)
 
 kanto = TrainInfo("関東", os.getenv("KANTO_NAME"), os.getenv("KANTO_PASS"), r)
+kansai = TrainInfo("関西", os.getenv("KANTO_NAME"), os.getenv("KANTO_PASS"), r)
+
+thread1 = Thread(target=kanto.main)
+thread2 = Thread(target=kansai.main)
+thread1.start()
+thread2.start()
+thread1.join()
+thread2.join()
