@@ -1,6 +1,8 @@
 import atproto
 from bs4 import BeautifulSoup
 import json
+import logging
+from logging import getLogger, INFO
 import os
 import re
 import requests
@@ -17,20 +19,40 @@ r = Redis(
 
 class TrainInfo:
     def __init__(self, region, bluesky_name, bluesky_pass, r):
+        self.region_data ={
+            "関東": {
+                "id":"4",
+                "roman":"kanto",
+                "db":"kanto_train_test",
+
+            }, 
+            "関西": {
+                "id":"6",
+                "roman":"kansai",
+                "db":"kansai_train_test",
+            }, 
+        }
+
         self.region = region
         self.bluesky_name = bluesky_name
         self.bluesky_pass = bluesky_pass
 
         self.r = r
 
+        self.logger = getLogger(self.region_data[self.region]["roman"])
+        self.logger.setLevel(INFO)
+        handler = logging.StreamHandler()
+        formatter = logging.Formatter('[%(levelname)s:%(name)s] %(message)s - %(asctime)s')
+        handler.setFormatter(formatter)
+        self.logger.addHandler(handler)
+
         self.client = atproto.Client()
         self.client.login(self.bluesky_name, self.bluesky_pass)
 
-        print(region + "リージョンログイン")
-
+        self.logger.info("Bluesky Login")
+        
     def request(self):
-        regions = {"関東": "4", "関西": "6"}
-        url = f"https://www.nhk.or.jp/n-data/traffic/train/traininfo_area_0{regions[self.region]}.json"
+        url = f"https://www.nhk.or.jp/n-data/traffic/train/traininfo_area_0{self.region_data[self.region]["id"]}.json"
         response = requests.get(url)
 
         if response.status_code == 200:
@@ -47,6 +69,7 @@ class TrainInfo:
                 }
                 for o in original_data
             ]
+            self.logger.info("Get data from main source")
         else:
             url = "https://mainichi.jp/traffic/etc/a.html"
             response = requests.get(url)
@@ -70,6 +93,8 @@ class TrainInfo:
                 for t, s, d in zip(train, status, detail)
             ]
 
+            self.logger.info("Get data from sub source")
+
         status_emoji = {
             "平常運転": "🚋",
             "運転再開": "🚋",
@@ -89,9 +114,8 @@ class TrainInfo:
         return data
 
     def make_message(self, data):
-        db_region = {"関東": "kanto_train_test", "関西": "kansai_train_test"}
-
-        old = json.loads(self.r.get(db_region[self.region]))
+        old = json.loads(self.r.get(self.region_data[self.region]["db"]))
+        self.logger.info("Load old data")
         trains = set([d["train"] for d in data] + [d["train"] for d in old])
 
         merged = [
@@ -127,7 +151,8 @@ class TrainInfo:
                     f"{m['train']} : {m['oldstatus']}➡️{m['newstatus']}\n{m['detail']}"
                 )
 
-        self.r.set(db_region[self.region], json.dumps(data))
+        self.r.set(self.region_data[self.region]["db"], json.dumps(data))
+        self.logger.info("Upload data")
         return messages
 
     def post(self, messages, service="Bluesky"):
@@ -144,11 +169,11 @@ class TrainInfo:
                     processing_message = ""
 
         if service == "Bluesky":
-            for m in messages_list:
+            for i, m in enumerate(messages_list):
                 if messages_list.index(m) == 0:
                     post = self.client.send_post(m)
                     root_post_ref = atproto.models.create_strong_ref(post)
-                elif message_list.index(m) == 1:
+                elif messages_list.index(m) == 1:
                     reply_to_root = atproto.models.create_strong_ref(
                         self.client.send_post(
                             text=m,
@@ -166,6 +191,9 @@ class TrainInfo:
                             ),
                         )
                     )
+                self.logger.info(f"Successfully post to Bluesky {i + 1}")
+
+            self.logger.info("Done with posted to Bluesky")
 
 
 kanto = TrainInfo("関東", os.getenv("KANTO_NAME"), os.getenv("KANTO_PASS"), r)
