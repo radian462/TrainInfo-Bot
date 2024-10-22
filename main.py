@@ -116,6 +116,11 @@ class TrainInfo:
     def make_message(self, data):
         old = json.loads(self.r.get(self.region_data[self.region]["db"]))
         self.logger.info("Load old data")
+
+        if old == data:
+            self.logger.info("Data is the same")
+            return ["運行状況に変更はありません。"]
+
         trains = set([d["train"] for d in data] + [d["train"] for d in old])
 
         merged = [
@@ -160,6 +165,8 @@ class TrainInfo:
         processing_message = ""
         if not messages:
             processing_message = self.region + "の電車は全て正常に運行しています。"
+        elif messages == ["運行状況に変更はありません。"]:
+            messages_list = messages
         else:
             for m in messages:
                 if len(processing_message + m + "\n\n") <= 300:
@@ -167,34 +174,37 @@ class TrainInfo:
                 else:
                     messages_list.append(processing_message.rstrip("\n\n"))
                     processing_message = ""
-
+      
         if service == "Bluesky":
-            for i, m in enumerate(messages_list):
-                if messages_list.index(m) == 0:
-                    post = self.client.send_post(m)
-                    root_post_ref = atproto.models.create_strong_ref(post)
-                elif messages_list.index(m) == 1:
-                    reply_to_root = atproto.models.create_strong_ref(
-                        self.client.send_post(
-                            text=m,
-                            reply_to=atproto.models.AppBskyFeedPost.ReplyRef(
-                                parent=root_post_ref, root=root_post_ref
-                            ),
+            latest_post = self.client.get_author_feed(actor=self.bluesky_name, limit=1).feed[0].post.record.text
+            if latest_post == "運行状況に変更はありません。" and messages_list == ["運行状況に変更はありません。"]:
+                self.logger.info("Pending for the same post")
+            else:
+                for i, m in enumerate(messages_list):
+                    if messages_list.index(m) == 0:
+                        post = self.client.send_post(m)
+                        root_post_ref = atproto.models.create_strong_ref(post)
+                    elif messages_list.index(m) == 1:
+                        reply_to_root = atproto.models.create_strong_ref(
+                            self.client.send_post(
+                                text=m,
+                                reply_to=atproto.models.AppBskyFeedPost.ReplyRef(
+                                    parent=root_post_ref, root=root_post_ref
+                                ),
+                            )
                         )
-                    )
-                else:
-                    reply_to_root = atproto.models.create_strong_ref(
-                        self.client.send_post(
-                            text=m,
-                            reply_to=atproto.models.AppBskyFeedPost.ReplyRef(
-                                parent=reply_to_root, root=root_post_ref
-                            ),
+                    else:
+                        reply_to_root = atproto.models.create_strong_ref(
+                            self.client.send_post(
+                                text=m,
+                                reply_to=atproto.models.AppBskyFeedPost.ReplyRef(
+                                    parent=reply_to_root, root=root_post_ref
+                                ),
+                            )
                         )
-                    )
-                self.logger.info(f"Successfully post to Bluesky {i + 1}")
+                    self.logger.info(f"Successfully post to Bluesky {i + 1}")
 
-            self.logger.info("Done with posted to Bluesky")
-
+                self.logger.info("Done with posted to Bluesky") 
 
 kanto = TrainInfo("関東", os.getenv("KANTO_NAME"), os.getenv("KANTO_PASS"), r)
 
