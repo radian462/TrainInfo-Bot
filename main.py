@@ -232,8 +232,8 @@ class TrainInfo:
             self.logger.info(f"Sleep {wait_time} seconds")
             time.sleep(wait_time)
 
-kanto = TrainInfo("関東", os.getenv("BLUSKY_KANTO_NAME"), os.getenv("BLUSKY_KANTO_PASS"), r)
-kansai = TrainInfo("関西", os.getenv("BLUSKY_KANSAI_NAME"), os.getenv("BLUSKY_KANSAI_PASS"), r)
+kanto = TrainInfo("関東", os.getenv("BLUESKY_KANTO_NAME"), os.getenv("BLUESKY_KANTO_PASS"), r)
+kansai = TrainInfo("関西", os.getenv("BLUESKY_KANSAI_NAME"), os.getenv("BLUESKY_KANSAI_PASS"), r)
 
 thread1 = Thread(target=kanto.main)
 thread2 = Thread(target=kansai.main)
