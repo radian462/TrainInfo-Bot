@@ -1,5 +1,6 @@
 import atproto
 from bs4 import BeautifulSoup
+from datetime import datetime
 import json
 import logging
 from logging import getLogger, INFO
@@ -7,6 +8,8 @@ import os
 import re
 import requests
 from redis import Redis
+from threading import Thread
+import time
 
 r = Redis(
     host=os.getenv("UPSTASH_HOST"),
@@ -19,18 +22,17 @@ r = Redis(
 
 class TrainInfo:
     def __init__(self, region, bluesky_name, bluesky_pass, r):
-        self.region_data ={
+        self.region_data = {
             "関東": {
-                "id":"4",
-                "roman":"kanto",
-                "db":"kanto_train_test",
-
-            }, 
+                "id": "4",
+                "roman": "kanto",
+                "db": "kanto_train_test",
+            },
             "関西": {
-                "id":"6",
-                "roman":"kansai",
-                "db":"kansai_train_test",
-            }, 
+                "id": "6",
+                "roman": "kansai",
+                "db": "kansai_train_test",
+            },
         }
 
         self.region = region
@@ -42,7 +44,9 @@ class TrainInfo:
         self.logger = getLogger(self.region_data[self.region]["roman"])
         self.logger.setLevel(INFO)
         handler = logging.StreamHandler()
-        formatter = logging.Formatter('[%(levelname)s:%(name)s] %(message)s - %(asctime)s')
+        formatter = logging.Formatter(
+            "[%(levelname)s:%(name)s] %(message)s - %(asctime)s"
+        )
         handler.setFormatter(formatter)
         self.logger.addHandler(handler)
 
@@ -50,10 +54,11 @@ class TrainInfo:
         self.client.login(self.bluesky_name, self.bluesky_pass)
 
         self.logger.info("Bluesky Login")
-        
+
     def request(self):
         url = f"https://www.nhk.or.jp/n-data/traffic/train/traininfo_area_0{self.region_data[self.region]["id"]}.json"
         response = requests.get(url)
+        print(url)
 
         if response.status_code == 200:
             original_data = (
@@ -173,11 +178,19 @@ class TrainInfo:
                     processing_message += m + "\n\n"
                 else:
                     messages_list.append(processing_message.rstrip("\n\n"))
-                    processing_message = ""
-      
+                    processing_message = m + "\n\n"
+
+                messages_list.append(processing_message.rstrip("\n\n"))
+                
         if service == "Bluesky":
-            latest_post = self.client.get_author_feed(actor=self.bluesky_name, limit=1).feed[0].post.record.text
-            if latest_post == "運行状況に変更はありません。" and messages_list == ["運行状況に変更はありません。"]:
+            latest_post = (
+                self.client.get_author_feed(actor=self.bluesky_name, limit=1)
+                .feed[0]
+                .post.record.text
+            )
+            if latest_post == "運行状況に変更はありません。" and messages_list == [
+                "運行状況に変更はありません。"
+            ]:
                 self.logger.info("Pending for the same post")
             else:
                 for i, m in enumerate(messages_list):
@@ -204,10 +217,21 @@ class TrainInfo:
                         )
                     self.logger.info(f"Successfully post to Bluesky {i + 1}")
 
-                self.logger.info("Done with posted to Bluesky") 
+                self.logger.info("Done with posted to Bluesky")
+
+    def main(self):
+        interval = 10
+        while True:
+            minutes, seconds = datetime.now().minute, datetime.now().second
+            
+            if minutes % interval == 0:
+                data = self.request()
+                messages = self.make_message(data)
+                self.post(messages)
+
+            next_minute = (minutes // interval + 1) * interval
+            wait_time = (next_minute - minutes) * 60 - seconds
+            self.logger.info(f"Sleep {wait_time} seconds")
+            time.sleep(wait_time)
 
 kanto = TrainInfo("関東", os.getenv("KANTO_NAME"), os.getenv("KANTO_PASS"), r)
-
-data = kanto.request()
-messages = kanto.make_message(data)
-kanto.post(messages)
