@@ -10,3 +10,6 @@
 - 関西
   - [Bluesky](https://bsky.app/profile/did:plc:hpioxwkkbmbexev43wjiti4d)(@train-kansai.f5.si)
     - [リスト](https://bsky.app/profile/did:plc:sggbtldl6x3jq5xveequpip6/lists/3klj3vedmsc2l)
+
+# 要望
+要望などは[Issues](https://github.com/radian462/TrainInfo-Bot-Wiki/issues)にお願いします。
