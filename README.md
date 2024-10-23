@@ -1,6 +1,7 @@
 # 運行状況Bot
 電車の運行状況を取得して投稿するBotです。
 現時点ではBlueskyのみ稼働しています。
+詳しい情報は[Wiki](https://github.com/radian462/TrainInfo-Bot-Wiki/wiki)へ
 
 # アカウント
 - 関東
