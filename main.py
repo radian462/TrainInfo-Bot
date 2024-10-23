@@ -26,12 +26,12 @@ class TrainInfo:
             "関東": {
                 "id": "4",
                 "roman": "kanto",
-                "db": "kanto_train",
+                "db": os.getenv("KANTO_DB"),
             },
             "関西": {
                 "id": "6",
                 "roman": "kansai",
-                "db": "kansai_train",
+                "db": os.getenv("KANSAI_DB"),
             },
         }
 
@@ -219,7 +219,7 @@ class TrainInfo:
                 self.logger.info("Done with posted to Bluesky")
 
     def main(self):
-        interval = 10
+        interval = 5
         while True:
             minutes, seconds = datetime.now().minute, datetime.now().second
             
