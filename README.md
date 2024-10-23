@@ -4,7 +4,7 @@
 
 # アカウント
 - 関東
-  - [Bluesky(@train-kanto.f5.si)](https://bsky.app/profile/did:plc:f2nbethp4g7xfdthyv2wipjo)
+  - [Bluesky](https://bsky.app/profile/did:plc:f2nbethp4g7xfdthyv2wipjo)(@train-kanto.f5.si)
 
 - 関西
-  - - [Bluesky(@train-kansai.f5.si)](https://bsky.app/profile/did:plc:hpioxwkkbmbexev43wjiti4d)
+  - [Bluesky](https://bsky.app/profile/did:plc:hpioxwkkbmbexev43wjiti4d)(@train-kansai.f5.si)
