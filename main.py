@@ -26,12 +26,12 @@ class TrainInfo:
             "関東": {
                 "id": "4",
                 "roman": "kanto",
-                "db": "kanto_train_test",
+                "db": "kanto_train",
             },
             "関西": {
                 "id": "6",
                 "roman": "kansai",
-                "db": "kansai_train_test",
+                "db": "kansai_train",
             },
         }
 
@@ -232,8 +232,8 @@ class TrainInfo:
             self.logger.info(f"Sleep {wait_time} seconds")
             time.sleep(wait_time)
 
-kanto = TrainInfo("関東", os.getenv("KANTO_NAME"), os.getenv("KANTO_PASS"), r)
-kansai = TrainInfo("関西", os.getenv("KANTO_NAME"), os.getenv("KANTO_PASS"), r)
+kanto = TrainInfo("関東", os.getenv("BLUESKY_KANTO_NAME"), os.getenv("BLUESKY_KANTO_PASS"), r)
+kansai = TrainInfo("関西", os.getenv("BLUESKY_KANSAI_NAME"), os.getenv("BLUESKY_KANSAI_PASS"), r)
 
 thread1 = Thread(target=kanto.main)
 thread2 = Thread(target=kansai.main)
