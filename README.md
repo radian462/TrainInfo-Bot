@@ -13,6 +13,8 @@
   - Bluesky
     - [@train-kansai.f5.si](https://bsky.app/profile/did:plc:hpioxwkkbmbexev43wjiti4d)
     - [リスト](https://bsky.app/profile/did:plc:sggbtldl6x3jq5xveequpip6/lists/3klj3vedmsc2l)
+   
+# 詳しい情報は[Wiki](https://github.com/radian462/TrainInfo-Bot-Wiki/wiki)へ
 
 # 要望
 要望などは[Issues](https://github.com/radian462/TrainInfo-Bot-Wiki/issues)にお願いします。
