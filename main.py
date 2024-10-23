@@ -177,9 +177,9 @@ class TrainInfo:
                 if len(processing_message + m + "\n\n") < 300:
                     processing_message += m + "\n\n"
                 else:
-                    messages_list.append(processing_message)
+                    messages_list.append(processing_message.rstrip('\r\n'))
                     processing_message = m + "\n\n"
-            messages_list.append(processing_message)
+            messages_list.append(processing_message.rstrip('\r\n'))
 
         if service == "Bluesky":
             latest_post = (
@@ -219,7 +219,7 @@ class TrainInfo:
                 self.logger.info("Done with posted to Bluesky")
 
     def main(self):
-        interval = 10
+        interval = 5
         while True:
             minutes, seconds = datetime.now().minute, datetime.now().second
             
