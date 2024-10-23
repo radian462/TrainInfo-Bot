@@ -177,7 +177,7 @@ class TrainInfo:
                     processing_message += m + "\n\n"
                 else:
                     messages_list.append(processing_message)
-                    processing_message = m
+                    processing_message = m + "\n\n"
             messages_list.append(processing_message)
 
         if service == "Bluesky":
