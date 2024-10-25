@@ -99,22 +99,25 @@ class TrainInfo:
 
             self.logger.info("Get data from sub source")
 
-        status_emoji = {
-            "平常運転": "🚋",
-            "運転再開": "🚋",
-            "運転計画": "🗒️",
+        self.status_emoji = {
+            "運転見合わせ": "🛑",
+            "列車遅延": "🕒",
             "運転情報": "ℹ️",
             "運転状況": "ℹ️",
-            "列車遅延": "🕒",
-            "運転見合わせ": "🛑",
+            "運転計画": "🗒️",
             "交通障害情報":"🚧",
+            "運転再開": "🚋",
+            "平常運転": "🚋",
             "その他": "⚠️",
         }
 
         for d in data:
-            for key in status_emoji.keys():
+            for key in self.status_emoji.keys():
                 if key in d["status"]:
-                    d["status"] = status_emoji[key] + key
+                    d["status"] = self.status_emoji[key] + key
+                    break
+            else:
+                d['status'] = '⚠️その他'
 
         return data
 
@@ -146,6 +149,10 @@ class TrainInfo:
         if not [m for m in merged if m["oldstatus"] != m["newstatus"]]:
             self.logger.info("Data is the same")
             return ["運行状況に変更はありません。"]
+
+        #並び替え
+        sort_list = [value + key for key, value in self.status_emoji.items()]
+        merged = [m for s in sort_list for m in merged if m['newstatus'] == s]
 
         # 変更点があるものを前に
         merged = [m for m in merged if m["oldstatus"] != m["newstatus"]] + [
@@ -236,9 +243,13 @@ class TrainInfo:
 kanto = TrainInfo("関東", os.getenv("BLUESKY_KANTO_NAME"), os.getenv("BLUESKY_KANTO_PASS"), r)
 kansai = TrainInfo("関西", os.getenv("BLUESKY_KANSAI_NAME"), os.getenv("BLUESKY_KANSAI_PASS"), r)
 
+data = kanto.request()
+print(kanto.make_message(data))
+'''
 thread1 = Thread(target=kanto.main)
 thread2 = Thread(target=kansai.main)
 thread1.start()
 thread2.start()
 thread1.join()
 thread2.join()
+'''
