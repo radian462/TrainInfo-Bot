@@ -122,10 +122,6 @@ class TrainInfo:
         old = json.loads(self.r.get(self.region_data[self.region]["db"]))
         self.logger.info("Load old data")
 
-        if old == data:
-            self.logger.info("Data is the same")
-            return ["運行状況に変更はありません。"]
-
         trains = set([d["train"] for d in data] + [d["train"] for d in old])
 
         merged = [
@@ -146,6 +142,10 @@ class TrainInfo:
             }
             for t in trains
         ]
+        
+        if not [m for m in merged if m["oldstatus"] != m["newstatus"]]:
+            self.logger.info("Data is the same")
+            return ["運行状況に変更はありません。"]
 
         # 変更点があるものを前に
         merged = [m for m in merged if m["oldstatus"] != m["newstatus"]] + [
