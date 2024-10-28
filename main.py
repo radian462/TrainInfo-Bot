@@ -2,6 +2,7 @@ import atproto
 from bs4 import BeautifulSoup
 from datetime import datetime
 import json
+from healthcheck import healthcheck
 import logging
 from logging import getLogger, INFO
 import os
@@ -148,7 +149,7 @@ class TrainInfo:
         
         if not [m for m in merged if m["oldstatus"] != m["newstatus"]]:
             self.logger.info("Data is the same")
-            return ["運行状況に変更はありません。"]
+            return []
 
         #並び替え
         sort_list = [value + key for key, value in self.status_emoji.items()]
@@ -194,9 +195,7 @@ class TrainInfo:
                 .feed[0]
                 .post.record.text
             )
-            if latest_post == "運行状況に変更はありません。" and messages_list == [
-                "運行状況に変更はありません。"
-            ]:
+            if messages_list == ["運行状況に変更はありません。"]:
                 self.logger.info("Pending for the same post")
             else:
                 for i, m in enumerate(messages_list):
@@ -240,6 +239,7 @@ class TrainInfo:
             self.logger.info(f"Sleep {wait_time} seconds")
             time.sleep(wait_time)
 
+healthcheck()
 kanto = TrainInfo("関東", os.getenv("BLUESKY_KANTO_NAME"), os.getenv("BLUESKY_KANTO_PASS"), r)
 kansai = TrainInfo("関西", os.getenv("BLUESKY_KANSAI_NAME"), os.getenv("BLUESKY_KANSAI_PASS"), r)
 
