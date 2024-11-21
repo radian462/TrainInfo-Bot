@@ -1,16 +1,18 @@
-import atproto
-from bs4 import BeautifulSoup
 from datetime import datetime
 import json
-from healthcheck import healthcheck
-import logging
-from logging import getLogger, INFO
+from logging import getLogger, INFO, StreamHandler, Formatter
 import os
 import re
-import requests
-from redis import Redis
 from threading import Thread
 import time
+
+import atproto
+from bs4 import BeautifulSoup
+import requests
+from redis import Redis
+
+from healthcheck import healthcheck
+
 
 r = Redis(
     host=os.getenv("UPSTASH_HOST"),
@@ -44,10 +46,8 @@ class TrainInfo:
 
         self.logger = getLogger(self.region_data[self.region]["roman"])
         self.logger.setLevel(INFO)
-        handler = logging.StreamHandler()
-        formatter = logging.Formatter(
-            "[%(levelname)s:%(name)s] %(message)s - %(asctime)s"
-        )
+        handler = StreamHandler()
+        formatter = Formatter("[%(levelname)s:%(name)s] %(message)s - %(asctime)s")
         handler.setFormatter(formatter)
         self.logger.addHandler(handler)
 
@@ -59,7 +59,7 @@ class TrainInfo:
     def request(self):
         url = f"https://www.nhk.or.jp/n-data/traffic/train/traininfo_area_0{self.region_data[self.region]["id"]}.json"
         response = requests.get(url)
-       
+
         if response.status_code == 200:
             original_data = (
                 response.json()["channel"]["item"]
@@ -106,7 +106,7 @@ class TrainInfo:
             "運転情報": "ℹ️",
             "運転状況": "ℹ️",
             "運転計画": "🗒️",
-            "交通障害情報":"🚧",
+            "交通障害情報": "🚧",
             "運転再開": "🚋",
             "平常運転": "🚋",
             "その他": "⚠️",
@@ -118,7 +118,7 @@ class TrainInfo:
                     d["status"] = self.status_emoji[key] + key
                     break
             else:
-                d['status'] = '⚠️その他'
+                d["status"] = "⚠️その他"
 
         return data
 
@@ -146,14 +146,14 @@ class TrainInfo:
             }
             for t in trains
         ]
-        
+
         if not [m for m in merged if m["oldstatus"] != m["newstatus"]]:
             self.logger.info("Data is the same")
             return []
 
-        #並び替え
+        # 並び替え
         sort_list = [value + key for key, value in self.status_emoji.items()]
-        merged = [m for s in sort_list for m in merged if m['newstatus'] == s]
+        merged = [m for s in sort_list for m in merged if m["newstatus"] == s]
 
         # 変更点があるものを前に
         merged = [m for m in merged if m["oldstatus"] != m["newstatus"]] + [
@@ -185,9 +185,9 @@ class TrainInfo:
                 if len(processing_message + m + "\n\n") < 300:
                     processing_message += m + "\n\n"
                 else:
-                    messages_list.append(processing_message.rstrip('\r\n'))
+                    messages_list.append(processing_message.rstrip("\r\n"))
                     processing_message = m + "\n\n"
-            messages_list.append(processing_message.rstrip('\r\n'))
+            messages_list.append(processing_message.rstrip("\r\n"))
 
         if service == "Bluesky":
             latest_post = (
@@ -228,7 +228,7 @@ class TrainInfo:
         interval = 10
         while True:
             minutes, seconds = datetime.now().minute, datetime.now().second
-            
+
             if minutes % interval == 0:
                 data = self.request()
                 messages = self.make_message(data)
@@ -239,9 +239,14 @@ class TrainInfo:
             self.logger.info(f"Sleep {wait_time} seconds")
             time.sleep(wait_time)
 
+
 healthcheck()
-kanto = TrainInfo("関東", os.getenv("BLUESKY_KANTO_NAME"), os.getenv("BLUESKY_KANTO_PASS"), r)
-kansai = TrainInfo("関西", os.getenv("BLUESKY_KANSAI_NAME"), os.getenv("BLUESKY_KANSAI_PASS"), r)
+kanto = TrainInfo(
+    "関東", os.getenv("BLUESKY_KANTO_NAME"), os.getenv("BLUESKY_KANTO_PASS"), r
+)
+kansai = TrainInfo(
+    "関西", os.getenv("BLUESKY_KANSAI_NAME"), os.getenv("BLUESKY_KANSAI_PASS"), r
+)
 
 thread1 = Thread(target=kanto.main)
 thread2 = Thread(target=kansai.main)
