@@ -156,12 +156,11 @@ class TrainInfo:
         merged = [m for s in sort_list for m in merged if m["newstatus"] == s]
 
         # 変更点があるものを前に&平常運転→平常運転を削除
-        merged = [
-            m for m in merged if m["oldstatus"] != m["newstatus"]
-            ] + [
-            m for m in merged if m["oldstatus"] == m["newstatus"] and m["newstatus"] != "🚋平常運転"
+        merged = [m for m in merged if m["oldstatus"] != m["newstatus"]] + [
+            m
+            for m in merged
+            if m["oldstatus"] == m["newstatus"] and m["newstatus"] != "🚋平常運転"
         ]
-
 
         messages = []
         for m in merged:
