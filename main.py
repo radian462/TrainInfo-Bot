@@ -227,7 +227,7 @@ class TrainInfo:
                 self.logger.info("Done with posted to Bluesky")
 
     def main(self):
-        interval = 2
+        interval = 10
         while True:
             minutes, seconds = datetime.now().minute, datetime.now().second
 
