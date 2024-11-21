@@ -38,6 +38,18 @@ class TrainInfo:
             },
         }
 
+        self.status_emoji = {
+            "運転見合わせ": "🛑",
+            "列車遅延": "🕒",
+            "運転情報": "ℹ️",
+            "運転状況": "ℹ️",
+            "運転計画": "🗒️",
+            "交通障害情報": "🚧",
+            "運転再開": "🚋",
+            "平常運転": "🚋",
+            "その他": "⚠️",
+        }
+
         self.region = region
         self.bluesky_name = bluesky_name
         self.bluesky_pass = bluesky_pass
@@ -69,7 +81,7 @@ class TrainInfo:
             data = [
                 {
                     "train": o["trainLine"],
-                    "status": re.sub(r"^.*? ", "", o["title"]),
+                    "status": o["status"],
                     "detail": o["textLong"],
                 }
                 for o in original_data
@@ -99,18 +111,6 @@ class TrainInfo:
             ]
 
             self.logger.info("Get data from sub source")
-
-        self.status_emoji = {
-            "運転見合わせ": "🛑",
-            "列車遅延": "🕒",
-            "運転情報": "ℹ️",
-            "運転状況": "ℹ️",
-            "運転計画": "🗒️",
-            "交通障害情報": "🚧",
-            "運転再開": "🚋",
-            "平常運転": "🚋",
-            "その他": "⚠️",
-        }
 
         for d in data:
             for key in self.status_emoji.keys():
@@ -149,16 +149,19 @@ class TrainInfo:
 
         if not [m for m in merged if m["oldstatus"] != m["newstatus"]]:
             self.logger.info("Data is the same")
-            return []
+            return ["運行状況に変更はありません。"]
 
         # 並び替え
         sort_list = [value + key for key, value in self.status_emoji.items()]
         merged = [m for s in sort_list for m in merged if m["newstatus"] == s]
 
-        # 変更点があるものを前に
-        merged = [m for m in merged if m["oldstatus"] != m["newstatus"]] + [
-            m for m in merged if m["oldstatus"] == m["newstatus"]
+        # 変更点があるものを前に&平常運転→平常運転を削除
+        merged = [
+            m for m in merged if m["oldstatus"] != m["newstatus"]
+            ] + [
+            m for m in merged if m["oldstatus"] == m["newstatus"] and m["newstatus"] != "🚋平常運転"
         ]
+
 
         messages = []
         for m in merged:
@@ -225,7 +228,7 @@ class TrainInfo:
                 self.logger.info("Done with posted to Bluesky")
 
     def main(self):
-        interval = 10
+        interval = 2
         while True:
             minutes, seconds = datetime.now().minute, datetime.now().second
 
@@ -241,12 +244,14 @@ class TrainInfo:
 
 
 healthcheck()
+
 kanto = TrainInfo(
     "関東", os.getenv("BLUESKY_KANTO_NAME"), os.getenv("BLUESKY_KANTO_PASS"), r
 )
 kansai = TrainInfo(
     "関西", os.getenv("BLUESKY_KANSAI_NAME"), os.getenv("BLUESKY_KANSAI_PASS"), r
 )
+
 
 thread1 = Thread(target=kanto.main)
 thread2 = Thread(target=kansai.main)
