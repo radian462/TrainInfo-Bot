@@ -244,17 +244,18 @@ class TrainInfo:
 
 healthcheck()
 
-kanto = TrainInfo(
+if __name__ == "__main__":
+    kanto = TrainInfo(
     "関東", os.getenv("BLUESKY_KANTO_NAME"), os.getenv("BLUESKY_KANTO_PASS"), r
-)
-kansai = TrainInfo(
-    "関西", os.getenv("BLUESKY_KANSAI_NAME"), os.getenv("BLUESKY_KANSAI_PASS"), r
-)
-
-
-thread1 = Thread(target=kanto.main)
-thread2 = Thread(target=kansai.main)
-thread1.start()
-thread2.start()
-thread1.join()
-thread2.join()
+    )
+    kansai = TrainInfo(
+        "関西", os.getenv("BLUESKY_KANSAI_NAME"), os.getenv("BLUESKY_KANSAI_PASS"), r
+    )
+    
+    
+    thread1 = Thread(target=kanto.main)
+    thread2 = Thread(target=kansai.main)
+    thread1.start()
+    thread2.start()
+    thread1.join()
+    thread2.join()
