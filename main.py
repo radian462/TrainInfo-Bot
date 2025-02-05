@@ -1,18 +1,18 @@
-from datetime import datetime
 import json
-from logging import getLogger, INFO, StreamHandler, Formatter
 import os
 import re
-from threading import Thread
 import time
+from datetime import datetime
+from logging import DEBUG, Formatter, StreamHandler, getLogger
+from threading import Thread
 
 import atproto
-from bs4 import BeautifulSoup
 import requests
+from bs4 import BeautifulSoup
 from redis import Redis
+from rich.logging import RichHandler
 
 from healthcheck import healthcheck
-
 
 r = Redis(
     host=os.getenv("UPSTASH_HOST"),
@@ -57,9 +57,9 @@ class TrainInfo:
         self.r = r
 
         self.logger = getLogger(self.region_data[self.region]["roman"])
-        self.logger.setLevel(INFO)
-        handler = StreamHandler()
-        formatter = Formatter("[%(levelname)s:%(name)s] %(message)s - %(asctime)s")
+        self.logger.setLevel(DEBUG)
+        handler = RichHandler(rich_tracebacks=True, markup=True)
+        formatter = Formatter("[magenta]%(name)s[/magenta] %(message)s")
         handler.setFormatter(formatter)
         self.logger.addHandler(handler)
 
