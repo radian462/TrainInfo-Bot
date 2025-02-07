@@ -6,8 +6,12 @@ from typing import final
 import requests
 from bs4 import BeautifulSoup
 from redis import Redis
+from dotenv import load_dotenv
 
 from Modules.make_logger import make_logger
+
+
+load_dotenv()
 
 STATUS_EMOJI: final = {
     "運転見合わせ": "🛑",
@@ -34,22 +38,25 @@ REGION_DATA: final = {
     },
 }
 
+r = Redis(
+    host=os.getenv("UPSTASH_HOST"),
+    port=os.getenv("UPSTASH_PORT"),
+    password=os.getenv("UPSTASH_PASS"),
+    ssl=True,
+    decode_responses=True,
+)
 
 class TrainInfo:
     def __init__(self, region: str):
         self.logger = make_logger(f"traininfo[{region}]")
-        self.r = Redis(
-            host=os.getenv("UPSTASH_HOST"),
-            port=os.getenv("UPSTASH_PORT"),
-            password=os.getenv("UPSTASH_PASS"),
-            ssl=True,
-            decode_responses=True,
-        )
 
-        self.region = region
+        self.region: final = region
+        self.region_id: final = REGION_DATA[region]["id"]
+        self.region_roman: final = REGION_DATA[region]["roman"]
+        self.region_db: final = REGION_DATA[region]["db"]
 
     def request(self) -> dict:
-        url = f"https://www.nhk.or.jp/n-data/traffic/train/traininfo_area_0{REGION_DATA[self.region]["id"]}.json"
+        url = f"https://www.nhk.or.jp/n-data/traffic/train/traininfo_area_0{self.region_id}.json"
         response = requests.get(url)
 
         if response.status_code == 200:
@@ -104,7 +111,7 @@ class TrainInfo:
         return data
 
     def make_message(self, data) -> list[str]:
-        old = json.loads(self.r.get(REGION_DATA[self.region]["db"]))
+        old = json.loads(r.get(self.region_db))
         self.logger.info("Load old data")
         trains = set([d["train"] for d in data] + [d["train"] for d in old])
         merged = [
@@ -149,7 +156,7 @@ class TrainInfo:
                     f"{m['train']} : {m['oldstatus']}➡️{m['newstatus']}\n{m['detail']}"
                 )
 
-        self.r.set(REGION_DATA[self.region]["db"], json.dumps(data))
+        r.set(self.region_db, json.dumps(data))
         self.logger.info("Upload data")
 
         messages_list = []
