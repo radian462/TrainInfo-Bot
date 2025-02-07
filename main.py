@@ -12,7 +12,7 @@ from bs4 import BeautifulSoup
 from redis import Redis
 from rich.logging import RichHandler
 
-from healthcheck import healthcheck
+from Modules.healthcheck import healthcheck
 
 r = Redis(
     host=os.getenv("UPSTASH_HOST"),
