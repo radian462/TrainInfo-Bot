@@ -55,11 +55,11 @@ class TrainInfo:
         self.region_roman: final = REGION_DATA[region]["roman"]
         self.region_db: final = REGION_DATA[region]["db"]
 
-    def request(self) -> dict:
-        url = f"https://www.nhk.or.jp/n-data/traffic/train/traininfo_area_0{self.region_id}.json"
-        response = requests.get(url)
+    def request_main_source(self) -> list[dict]:
+        try:
+            url = f"https://www.nhk.or.jp/n-data/traffic/train/traininfo_area_0{self.region_id}.json"
+            response = requests.get(url)
 
-        if response.status_code == 200:
             original_data = (
                 response.json()["channel"]["item"]
                 + response.json()["channel"]["itemLong"]
@@ -75,7 +75,14 @@ class TrainInfo:
             ]
 
             self.logger.info("Get data from main source")
-        else:
+
+            return data
+        except Exception:
+            self.logger.error("An error occurred",exc_info=True)
+            return []
+
+    def request_sub_source(self) -> list[dict]:
+        try:
             url = "https://mainichi.jp/traffic/etc/a.html"
             response = requests.get(url)
             region_html = re.search(
@@ -100,6 +107,13 @@ class TrainInfo:
 
             self.logger.info("Get data from sub source")
 
+            return data
+        
+        except Exception:
+            self.logger.error("An error occurred",exc_info=True)
+            return []
+    
+    def format_data(self, data) -> dict:
         for d in data:
             for key in STATUS_EMOJI.keys():
                 if key in d["status"]:
@@ -107,8 +121,15 @@ class TrainInfo:
                     break
                 else:
                     d["status"] = "⚠️その他"
-
         return data
+
+
+    def request(self) -> dict:
+        data = self.request_main_source()
+        if not data:
+            data = self.request_sub_source()
+            
+        return self.format_data(data)
 
     def make_message(self, data) -> list[str]:
         old = json.loads(r.get(self.region_db))
