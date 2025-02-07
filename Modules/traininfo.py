@@ -1,6 +1,7 @@
 import json
 import os
 import re
+from typing import final
 
 import requests
 from bs4 import BeautifulSoup
@@ -8,34 +9,34 @@ from redis import Redis
 
 from Modules.make_logger import make_logger
 
+STATUS_EMOJI: final = {
+    "運転見合わせ": "🛑",
+    "列車遅延": "🕒",
+    "運転情報": "ℹ️",
+    "運転状況": "ℹ️",
+    "運転計画": "🗒️",
+    "交通障害情報": "🚧",
+    "運転再開": "🚋",
+    "平常運転": "🚋",
+    "その他": "⚠️",
+}
+
+REGION_DATA: final = {
+    "関東": {
+        "id": "4",
+        "roman": "kanto",
+        "db": os.getenv("KANTO_DB"),
+    },
+    "関西": {
+        "id": "6",
+        "roman": "kansai",
+        "db": os.getenv("KANSAI_DB"),
+    },
+}
+
 
 class TrainInfo:
     def __init__(self, region: str):
-        self.region_data = {
-            "関東": {
-                "id": "4",
-                "roman": "kanto",
-                "db": os.getenv("KANTO_DB"),
-            },
-            "関西": {
-                "id": "6",
-                "roman": "kansai",
-                "db": os.getenv("KANSAI_DB"),
-            },
-        }
-
-        self.status_emoji = {
-            "運転見合わせ": "🛑",
-            "列車遅延": "🕒",
-            "運転情報": "ℹ️",
-            "運転状況": "ℹ️",
-            "運転計画": "🗒️",
-            "交通障害情報": "🚧",
-            "運転再開": "🚋",
-            "平常運転": "🚋",
-            "その他": "⚠️",
-        }
-
         self.logger = make_logger(f"traininfo[{region}]")
         self.r = Redis(
             host=os.getenv("UPSTASH_HOST"),
@@ -48,7 +49,7 @@ class TrainInfo:
         self.region = region
 
     def request(self) -> dict:
-        url = f"https://www.nhk.or.jp/n-data/traffic/train/traininfo_area_0{self.region_data[self.region]["id"]}.json"
+        url = f"https://www.nhk.or.jp/n-data/traffic/train/traininfo_area_0{REGION_DATA[self.region]["id"]}.json"
         response = requests.get(url)
 
         if response.status_code == 200:
@@ -93,9 +94,9 @@ class TrainInfo:
             self.logger.info("Get data from sub source")
 
         for d in data:
-            for key in self.status_emoji.keys():
+            for key in STATUS_EMOJI.keys():
                 if key in d["status"]:
-                    d["status"] = self.status_emoji[key] + key
+                    d["status"] = STATUS_EMOJI[key] + key
                     break
                 else:
                     d["status"] = "⚠️その他"
@@ -103,7 +104,7 @@ class TrainInfo:
         return data
 
     def make_message(self, data) -> list[str]:
-        old = json.loads(self.r.get(self.region_data[self.region]["db"]))
+        old = json.loads(self.r.get(REGION_DATA[self.region]["db"]))
         self.logger.info("Load old data")
         trains = set([d["train"] for d in data] + [d["train"] for d in old])
         merged = [
@@ -129,7 +130,7 @@ class TrainInfo:
             return ["運行状況に変更はありません。"]
 
         # 並び替え
-        sort_list = [value + key for key, value in self.status_emoji.items()]
+        sort_list = [value + key for key, value in STATUS_EMOJI.items()]
         merged = [m for s in sort_list for m in merged if m["newstatus"] == s]
 
         # 変更点があるものを前に&平常運転→平常運転を削除
@@ -148,7 +149,7 @@ class TrainInfo:
                     f"{m['train']} : {m['oldstatus']}➡️{m['newstatus']}\n{m['detail']}"
                 )
 
-        self.r.set(self.region_data[self.region]["db"], json.dumps(data))
+        self.r.set(REGION_DATA[self.region]["db"], json.dumps(data))
         self.logger.info("Upload data")
 
         messages_list = []
