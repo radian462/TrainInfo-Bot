@@ -7,6 +7,7 @@ from logging import DEBUG, Formatter, StreamHandler, getLogger
 from threading import Thread
 
 import atproto
+from dotenv import load_dotenv
 import requests
 from bs4 import BeautifulSoup
 from redis import Redis
@@ -243,6 +244,7 @@ class TrainInfo:
 
 
 healthcheck()
+load_dotenv()
 
 if __name__ == "__main__":
     kanto = TrainInfo(
