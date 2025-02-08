@@ -46,6 +46,7 @@ r = Redis(
     decode_responses=True,
 )
 
+
 class TrainInfo:
     def __init__(self, region: str):
         self.logger = make_logger(f"traininfo[{region}]")
@@ -78,7 +79,7 @@ class TrainInfo:
 
             return data
         except Exception:
-            self.logger.error("An error occurred",exc_info=True)
+            self.logger.error("An error occurred", exc_info=True)
             return []
 
     def request_sub_source(self) -> list[dict]:
@@ -108,91 +109,147 @@ class TrainInfo:
             self.logger.info("Get data from sub source")
 
             return data
-        
+
         except Exception:
-            self.logger.error("An error occurred",exc_info=True)
+            self.logger.error("An error occurred", exc_info=True)
             return []
-    
-    def format_data(self, data) -> dict:
-        for d in data:
-            for key in STATUS_EMOJI.keys():
-                if key in d["status"]:
-                    d["status"] = STATUS_EMOJI[key] + key
-                    break
+
+    def format_data(self, data) -> list[dict]:
+        try:
+            for d in data:
+                for key in STATUS_EMOJI.keys():
+                    if key in d["status"]:
+                        d["status"] = STATUS_EMOJI[key] + key
+                        break
                 else:
                     d["status"] = "⚠️その他"
-        return data
+            return data
+        except Exception:
+            self.logger.error("An error occurred", exc_info=True)
+            return []
 
+    def request(self) -> list[dict]:
+        try:
+            data = self.request_main_source()
+            if not data:
+                data = self.request_sub_source()
 
-    def request(self) -> dict:
-        data = self.request_main_source()
-        if not data:
-            data = self.request_sub_source()
-            
-        return self.format_data(data)
+            return self.format_data(data)
+        except Exception:
+            self.logger.error("An error occurred", exc_info=True)
+            return []
 
-    def make_message(self, data) -> list[str]:
-        old = json.loads(r.get(self.region_db))
-        self.logger.info("Load old data")
-        trains = set([d["train"] for d in data] + [d["train"] for d in old])
-        merged = [
-            {
-                "train": t,
-                "oldstatus": (
-                    next((o["status"] for o in old if o["train"] == t), "🚋平常運転")
-                ),
-                "newstatus": (
-                    next((d["status"] for d in data if d["train"] == t), "🚋平常運転")
-                ),
-                "detail": (
-                    next(
-                        (d["detail"] for d in data if d["train"] == t),
-                        "現在、ほぼ平常通り運転しています。",
-                    )
-                ),
-            }
-            for t in trains
-        ]
-        if not [m for m in merged if m["oldstatus"] != m["newstatus"]]:
-            self.logger.info("Data is the same")
-            return ["運行状況に変更はありません。"]
+    def get_last_data(self) -> list[dict]:
+        try:
+            last_data = json.loads(r.get(self.region_db))
+            self.logger.info(f"Load old data from {self.region_db}")
+            if last_data is None:
+                return []
 
-        # 並び替え
-        sort_list = [value + key for key, value in STATUS_EMOJI.items()]
-        merged = [m for s in sort_list for m in merged if m["newstatus"] == s]
+            return last_data
+        except Exception:
+            self.logger.error("An error occurred", exc_info=True)
+            return []
 
-        # 変更点があるものを前に&平常運転→平常運転を削除
-        merged = [m for m in merged if m["oldstatus"] != m["newstatus"]] + [
-            m
-            for m in merged
-            if m["oldstatus"] == m["newstatus"] and m["newstatus"] != "🚋平常運転"
-        ]
-        messages = []
+    def set_last_data(self, data: list[dict]):
+        try:
+            r.set(self.region_db, json.dumps(data))
+            self.logger.info(f"Set data to {self.region_db}")
+        except Exception:
+            self.logger.error("An error occurred", exc_info=True)
+            return []
 
-        for m in merged:
-            if m["newstatus"] == m["oldstatus"]:
-                messages.append(f"{m['train']} : {m['newstatus']}\n{m['detail']}")
-            else:
-                messages.append(
-                    f"{m['train']} : {m['oldstatus']}➡️{m['newstatus']}\n{m['detail']}"
-                )
+    def merge_data(self, data, old) -> list[dict]:
+        try:
+            trains = set([d["train"] for d in data] + [d["train"] for d in old])
+            merged = [
+                {
+                    "train": t,
+                    "oldstatus": (
+                        next((o["status"] for o in old if o["train"] == t), "🚋平常運転")
+                    ),
+                    "newstatus": (
+                        next((d["status"] for d in data if d["train"] == t), "🚋平常運転")
+                    ),
+                    "detail": (
+                        next(
+                            (d["detail"] for d in data if d["train"] == t),
+                            "現在、ほぼ平常通り運転しています。",
+                        )
+                    ),
+                }
+                for t in trains
+            ]
+            if not [m for m in merged if m["oldstatus"] != m["newstatus"]]:
+                self.logger.info("Data is the same")
+                return ["運行状況に変更はありません。"]
 
-        r.set(self.region_db, json.dumps(data))
-        self.logger.info("Upload data")
+            # 並び替え
+            sort_list = [value + key for key, value in STATUS_EMOJI.items()]
+            merged = [m for s in sort_list for m in merged if m["newstatus"] == s]
 
-        messages_list = []
-        processing_message = ""
-        if not messages:
-            processing_message = self.region + "の電車は全て正常に運行しています。"
-        elif messages == ["運行状況に変更はありません。"]:
-            messages_list = messages
-        else:
+            # 変更点があるものを前に&平常運転→平常運転を削除
+            merged = [m for m in merged if m["oldstatus"] != m["newstatus"]] + [
+                m
+                for m in merged
+                if m["oldstatus"] == m["newstatus"] and m["newstatus"] != "🚋平常運転"
+            ]
+
+            return merged
+        except Exception:
+            self.logger.error("An error occurred", exc_info=True)
+            return []
+
+    def format_message(self, messages) -> list[str]:
+        try:
+            formatted_messages = []
+
             for m in messages:
-                if len(processing_message + m + "\n\n") < 300:
-                    processing_message += m + "\n\n"
+                if m["newstatus"] == m["oldstatus"]:
+                    formatted_messages.append(
+                        f"{m['train']} : {m['newstatus']}\n{m['detail']}"
+                    )
                 else:
-                    messages_list.append(processing_message.rstrip("\r\n"))
-                    processing_message = m + "\n\n"
-            messages_list.append(processing_message.rstrip("\r\n"))
+                    formatted_messages.append(
+                        f"{m['train']} : {m['oldstatus']}➡️{m['newstatus']}\n{m['detail']}"
+                    )
 
-        return messages_list
+            return formatted_messages
+        except Exception:
+            self.logger.error("An error occurred", exc_info=True)
+            return []
+
+    def process_message(self, messages: list[str], width: int = 300) -> list[str]:
+        try:
+            messages_list = []
+            processing_message = ""
+
+            if not messages:
+                processing_message = self.region + "の電車は全て正常に運行しています。"
+            elif messages == ["運行状況に変更はありません。"]:
+                messages_list = messages
+            else:
+                for m in messages:
+                    if len(processing_message + m + "\n\n") < width:
+                        processing_message += m + "\n\n"
+                    else:
+                        messages_list.append(processing_message.rstrip("\r\n"))
+                        processing_message = m + "\n\n"
+                messages_list.append(processing_message.rstrip("\r\n"))
+
+                return messages_list
+        except Exception:
+            self.logger.error("An error occurred", exc_info=True)
+            return []
+
+    def make_message(self, data: list[dict], width: int = 300) -> list[str]:
+        try:
+            last_data = self.get_last_data()
+            merged = self.merge_data(data, last_data)
+            self.set_last_data(data)
+
+            messages = self.format_message(merged)
+            return self.process_message(messages, width)
+        except Exception:
+            self.logger.error("An error occurred", exc_info=True)
+            return []
