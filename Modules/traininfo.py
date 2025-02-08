@@ -5,11 +5,10 @@ from typing import final
 
 import requests
 from bs4 import BeautifulSoup
-from redis import Redis
 from dotenv import load_dotenv
+from redis import Redis
 
 from Modules.make_logger import make_logger
-
 
 load_dotenv()
 
@@ -166,10 +165,14 @@ class TrainInfo:
                 {
                     "train": t,
                     "oldstatus": (
-                        next((o["status"] for o in old if o["train"] == t), "🚋平常運転")
+                        next(
+                            (o["status"] for o in old if o["train"] == t), "🚋平常運転"
+                        )
                     ),
                     "newstatus": (
-                        next((d["status"] for d in data if d["train"] == t), "🚋平常運転")
+                        next(
+                            (d["status"] for d in data if d["train"] == t), "🚋平常運転"
+                        )
                     ),
                     "detail": (
                         next(
@@ -180,7 +183,7 @@ class TrainInfo:
                 }
                 for t in trains
             ]
-            
+
             # 並び替え
             sort_list = [value + key for key, value in STATUS_EMOJI.items()]
             merged = [m for s in sort_list for m in merged if m["newstatus"] == s]
@@ -237,9 +240,9 @@ class TrainInfo:
                         messages_list.append(processing_message.rstrip("\r\n"))
                         processing_message = m + "\n\n"
                 messages_list.append(processing_message.rstrip("\r\n"))
-            
+
             return messages_list
-            
+
         except Exception:
             self.logger.error("An error occurred", exc_info=True)
             self.logger.debug(messages_list)
@@ -255,7 +258,7 @@ class TrainInfo:
 
             messages = self.conv_message(merged)
             return self.process_message(messages, width)
-        
+
         except Exception:
             self.logger.error("An error occurred", exc_info=True)
             return []
