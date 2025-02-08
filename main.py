@@ -54,6 +54,7 @@ def main():
     while True:
         minutes, seconds = datetime.now().minute, datetime.now().second
 
+        threads = []
         if minutes % interval == 0:
             threads = [Thread(target=manager.execute) for manager in managers]
             for thread in threads:
@@ -61,6 +62,8 @@ def main():
 
             for thread in threads:
                 thread.join()
+
+            threads = []
 
         next_minute = (minutes // interval + 1) * interval
         wait_time = (next_minute - minutes) * 60 - seconds

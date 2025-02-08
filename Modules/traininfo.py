@@ -180,10 +180,7 @@ class TrainInfo:
                 }
                 for t in trains
             ]
-            if not [m for m in merged if m["oldstatus"] != m["newstatus"]]:
-                self.logger.info("Data is the same")
-                return ["運行状況に変更はありません。"]
-
+            
             # 並び替え
             sort_list = [value + key for key, value in STATUS_EMOJI.items()]
             merged = [m for s in sort_list for m in merged if m["newstatus"] == s]
@@ -200,18 +197,22 @@ class TrainInfo:
             self.logger.error("An error occurred", exc_info=True)
             return []
 
-    def format_message(self, messages) -> list[str]:
+    def conv_message(self, data: list[dict]) -> list[str]:
         try:
             formatted_messages = []
 
-            for m in messages:
-                if m["newstatus"] == m["oldstatus"]:
+            if not [d for d in data if d["oldstatus"] != d["newstatus"]]:
+                self.logger.info("Data is the same")
+                return ["運行状況に変更はありません。"]
+
+            for d in data:
+                if d["newstatus"] == d["oldstatus"]:
                     formatted_messages.append(
-                        f"{m['train']} : {m['newstatus']}\n{m['detail']}"
+                        f"{d['train']} : {d['newstatus']}\n{d['detail']}"
                     )
                 else:
                     formatted_messages.append(
-                        f"{m['train']} : {m['oldstatus']}➡️{m['newstatus']}\n{m['detail']}"
+                        f"{d['train']} : {d['oldstatus']}➡️{d['newstatus']}\n{d['detail']}"
                     )
 
             return formatted_messages
@@ -236,20 +237,25 @@ class TrainInfo:
                         messages_list.append(processing_message.rstrip("\r\n"))
                         processing_message = m + "\n\n"
                 messages_list.append(processing_message.rstrip("\r\n"))
-
-                return messages_list
+            
+            return messages_list
+            
         except Exception:
             self.logger.error("An error occurred", exc_info=True)
+            self.logger.debug(messages_list)
             return []
 
     def make_message(self, data: list[dict], width: int = 300) -> list[str]:
         try:
             last_data = self.get_last_data()
             merged = self.merge_data(data, last_data)
-            self.set_last_data(data)
 
-            messages = self.format_message(merged)
+            if last_data != data:
+                self.set_last_data(data)
+
+            messages = self.conv_message(merged)
             return self.process_message(messages, width)
+        
         except Exception:
             self.logger.error("An error occurred", exc_info=True)
             return []
