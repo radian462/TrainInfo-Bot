@@ -32,18 +32,34 @@ class RegionalManager:
             },
         }
 
+        self.logger = make_logger(region)
+
         self.region = region
         self.train_info = TrainInfo(region)
-        self.bluesky = Bluesky(
+
+        self.bluesky = Bluesky()
+        self.bluesky.login(
             self.account_datas[self.region]["Bluesky"]["name"],
             self.account_datas[self.region]["Bluesky"]["password"],
-            region,
         )
+
+        self.logger.info("Logged in Bluesky")
+
+    def bluesky_execute(self, messages: list[str]):
+        post = None
+        if messages == ["運行状況に変更はありません。"]:
+            self.logger.info("Pending for the same post")
+        else:
+            for i, m in enumerate(messages):
+                post = self.bluesky.post(m, post)
+                self.logger.info(f"Successfully posted to Bluesky {i + 1}")
+
+            self.logger.info("Done with posted")
 
     def execute(self):
         data = self.train_info.request()
         messages = self.train_info.make_message(data)
-        self.bluesky.post(messages)
+        self.bluesky_execute(messages)
 
 
 def main():

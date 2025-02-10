@@ -1,48 +1,107 @@
-import atproto
+from datetime import datetime
+from typing import Optional
+
+import requests
 
 from Modules.make_logger import make_logger
 
+HOST = "https://bsky.social/xrpc/"
+
 
 class Bluesky:
-    def __init__(self, bluesky_name: str, bluesky_pass: str, region: str):
-        self.bluesky_name = bluesky_name
-        self.bluesky_pass = bluesky_pass
+    def __init__(self):
+        self.logger = make_logger("Bluesky")
 
-        self.client = atproto.Client()
-        self.client.login(self.bluesky_name, self.bluesky_pass)
-
-        self.logger = make_logger(f"Bluesky[{region}]")
-        self.logger.info(f"Login to {bluesky_name}")
-
-    def post(self, messages_list: list[str]) -> None:
+    def login(self, identifier: str, password: str) -> dict:
         try:
-            if messages_list == ["運行状況に変更はありません。"]:
-                self.logger.info("Pending for the same post")
-            else:
-                for i, m in enumerate(messages_list):
-                    if messages_list.index(m) == 0:
-                        post = self.client.send_post(m)
-                        root_post_ref = atproto.models.create_strong_ref(post)
-                    elif messages_list.index(m) == 1:
-                        reply_to_root = atproto.models.create_strong_ref(
-                            self.client.send_post(
-                                text=m,
-                                reply_to=atproto.models.AppBskyFeedPost.ReplyRef(
-                                    parent=root_post_ref, root=root_post_ref
-                                ),
-                            )
-                        )
-                    else:
-                        reply_to_root = atproto.models.create_strong_ref(
-                            self.client.send_post(
-                                text=m,
-                                reply_to=atproto.models.AppBskyFeedPost.ReplyRef(
-                                    parent=reply_to_root, root=root_post_ref
-                                ),
-                            )
-                        )
-                    self.logger.info(f"Successfully post {i + 1}")
+            url = HOST + "com.atproto.server.createSession"
 
-                self.logger.info("Done with posted")
+            data = {"identifier": identifier, "password": password}
+
+            headers = {"Content-Type": "application/json"}
+
+            response = requests.post(url, json=data, headers=headers)
+            session_data = response.json()
+
+            self.handle = session_data.get("handle")
+            self.did = session_data.get("did")
+            self.accessjwt = session_data.get("accessJwt")
+            self.refreshjwt = session_data.get("refreshJwt")
+
+            return session_data
         except Exception:
             self.logger.error("An error occurred", exc_info=True)
+            return {}
+
+    def _refresh_token(self) -> None:
+        try:
+            url = HOST + "com.atproto.server.refreshSession"
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {self.refreshjwt}",
+            }
+
+            response = requests.post(url, headers=headers)
+            session_data = response.json()
+
+            self.accessjwt = session_data.get("accessJwt")
+            self.refreshjwt = session_data.get("refreshJwt")
+        except Exception:
+            self.logger.error("An error occurred", exc_info=True)
+            return None
+
+    def post(self, text: str, reply_to: Optional[dict] = None) -> dict:
+        try:
+            """
+            reply_toはこの関数の返り値かこのような辞書を渡す必要がある。
+            {
+                "uri": "example",
+                "cid": "example"
+            }
+            """
+            if not self.accessjwt:
+                print("Error: Not logged in")
+                return
+
+            self._refresh_token()
+
+            url = HOST + "com.atproto.repo.createRecord"
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {self.accessjwt}",
+            }
+            data = {
+                "repo": self.handle,
+                "collection": "app.bsky.feed.post",
+                "record": {
+                    "$type": "app.bsky.feed.post",
+                    "text": text,
+                    "createdAt": datetime.utcnow().isoformat() + "Z",
+                },
+            }
+
+            if reply_to:
+                data["record"]["reply"] = {
+                    "root": {
+                        "uri": reply_to.get("uri"),
+                        "cid": reply_to.get("cid"),
+                    },
+                    "parent": {
+                        "uri": reply_to.get("uri"),
+                        "cid": reply_to.get("cid"),
+                    },
+                }
+
+            response = requests.post(url, json=data, headers=headers)
+
+            return response.json()
+        except Exception:
+            self.logger.error("An error occurred", exc_info=True)
+            return {}
+
+
+if __name__ == "__main__":
+    bluesky = Bluesky()
+    bluesky.login("radian-test.bsky.social", "2w/kgju23")
+    post = bluesky.post("Test")
+    bluesky.post("Test2", post)
