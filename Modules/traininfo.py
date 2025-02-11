@@ -79,7 +79,7 @@ class TrainInfo:
             return data
         except Exception:
             self.logger.error("An error occurred", exc_info=True)
-            return []
+            return None
 
     def request_sub_source(self) -> list[dict]:
         try:
@@ -111,7 +111,7 @@ class TrainInfo:
 
         except Exception:
             self.logger.error("An error occurred", exc_info=True)
-            return []
+            return None
 
     def format_data(self, data) -> list[dict]:
         try:
@@ -130,7 +130,8 @@ class TrainInfo:
     def request(self) -> list[dict]:
         try:
             data = self.request_main_source()
-            if not data:
+            if data is None:
+                self.logger.warning("Request from main source failed")
                 data = self.request_sub_source()
 
             return self.format_data(data)
@@ -262,3 +263,4 @@ class TrainInfo:
         except Exception:
             self.logger.error("An error occurred", exc_info=True)
             return []
+        
