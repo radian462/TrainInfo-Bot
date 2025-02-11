@@ -60,8 +60,8 @@ class Bluesky:
             }
             """
             if not self.accessjwt:
-                print("Error: Not logged in")
-                return
+                self.logger.error("Not logged in")
+                return {}
 
             self._refresh_token()
 

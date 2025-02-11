@@ -1,7 +1,7 @@
 import json
 import os
 import re
-from typing import final
+from typing import Final, Optional
 
 import requests
 from bs4 import BeautifulSoup
@@ -12,7 +12,7 @@ from Modules.make_logger import make_logger
 
 load_dotenv()
 
-STATUS_EMOJI: final = {
+STATUS_EMOJI: Final[dict] = {
     "運転見合わせ": "🛑",
     "列車遅延": "🕒",
     "運転情報": "ℹ️",
@@ -24,7 +24,7 @@ STATUS_EMOJI: final = {
     "その他": "⚠️",
 }
 
-REGION_DATA: final = {
+REGION_DATA: Final[dict] = {
     "関東": {
         "id": "4",
         "roman": "kanto",
@@ -50,12 +50,12 @@ class TrainInfo:
     def __init__(self, region: str):
         self.logger = make_logger(f"traininfo[{region}]")
 
-        self.region: final = region
-        self.region_id: final = REGION_DATA[region]["id"]
-        self.region_roman: final = REGION_DATA[region]["roman"]
-        self.region_db: final = REGION_DATA[region]["db"]
+        self.region: Final[str] = region
+        self.region_id: Final[str] = REGION_DATA[region]["id"]
+        self.region_roman: Final[str] = REGION_DATA[region]["roman"]
+        self.region_db: Final[str] = REGION_DATA[region]["db"]
 
-    def request_main_source(self) -> list[dict]:
+    def request_main_source(self) -> Optional[list[dict]]:
         try:
             url = f"https://www.nhk.or.jp/n-data/traffic/train/traininfo_area_0{self.region_id}.json"
             response = requests.get(url)
@@ -81,33 +81,37 @@ class TrainInfo:
             self.logger.error("An error occurred", exc_info=True)
             return None
 
-    def request_sub_source(self) -> list[dict]:
+    def request_sub_source(self) -> Optional[list[dict]]:
         try:
             url = "https://mainichi.jp/traffic/etc/a.html"
             response = requests.get(url)
-            region_html = re.search(
+            match = re.search(
                 f'{self.region}エリア(.*?)<td colspan="3">',
                 re.sub("<strong>", "\n", response.text),
                 re.DOTALL,
-            ).group(1)
-            soup = BeautifulSoup(region_html, "html.parser")
+            )
+            if match is not None:
+                region_html = match.group(1)
+                soup = BeautifulSoup(region_html, "html.parser")
 
-            region_text = re.sub("\n\n", "", soup.get_text())
-            data_list = [
-                t for t in region_text.split() if re.search(r"[ぁ-ゖァ-ヶ一-龍]", t)
-            ]
+                region_text = re.sub("\n\n", "", soup.get_text())
+                data_list = [
+                    t for t in region_text.split() if re.search(r"[ぁ-ゖァ-ヶ一-龍]", t)
+                ]
 
-            train = [data_list[i] for i in range(0, len(data_list), 3)]
-            status = [data_list[i + 1] for i in range(0, len(data_list) - 1, 3)]
-            detail = [data_list[i + 2] for i in range(0, len(data_list) - 2, 3)]
-            data = [
-                {"train": t, "status": s, "detail": d}
-                for t, s, d in zip(train, status, detail)
-            ]
+                train = [data_list[i] for i in range(0, len(data_list), 3)]
+                status = [data_list[i + 1] for i in range(0, len(data_list) - 1, 3)]
+                detail = [data_list[i + 2] for i in range(0, len(data_list) - 2, 3)]
+                data = [
+                    {"train": t, "status": s, "detail": d}
+                    for t, s, d in zip(train, status, detail)
+                ]
 
-            self.logger.info("Get data from sub source")
+                self.logger.info("Get data from sub source")
 
-            return data
+                return data
+            else:
+                return []
 
         except Exception:
             self.logger.error("An error occurred", exc_info=True)
@@ -141,7 +145,8 @@ class TrainInfo:
 
     def get_last_data(self) -> list[dict]:
         try:
-            last_data = json.loads(r.get(self.region_db))
+            load_data = r.get(self.region_db)
+            last_data = json.loads(load_data)
             self.logger.info(f"Load old data from {self.region_db}")
             if last_data is None:
                 return []
@@ -263,4 +268,3 @@ class TrainInfo:
         except Exception:
             self.logger.error("An error occurred", exc_info=True)
             return []
-        
