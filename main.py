@@ -1,3 +1,4 @@
+from enum import Enum
 import os
 import time
 from datetime import datetime
@@ -14,6 +15,9 @@ healthcheck()
 load_dotenv()
 logger = make_logger("main")
 
+class Region(Enum):
+    KANTO = "関東"
+    KANSAI = "関西"
 
 class RegionalManager:
     def __init__(self, region):

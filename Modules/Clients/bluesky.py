@@ -155,10 +155,3 @@ class Bluesky:
         except Exception:
             self.logger.error("An error occurred", exc_info=True)
             return {}
-
-
-if __name__ == "__main__":
-    bluesky = Bluesky()
-    bluesky.login("radian-test.bsky.social", "2w/kgju23")
-    post = bluesky.post("Test")
-    bluesky.post("Test2", post)
