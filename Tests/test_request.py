@@ -1,14 +1,25 @@
+from unittest.mock import Mock, patch
+
 import pytest
-from unittest.mock import patch, Mock
-from Modules.traininfo.request import request_from_NHK, request_from_yahoo, TrainStatus
+
+from Modules.traininfo.request import (TrainStatus, request_from_NHK,
+                                       request_from_yahoo)
 
 
 @pytest.fixture
 def sample_nhk_response():
     return {
         "channel": {
-            "item": [{"trainLine": "山手線", "status": "平常", "textLong": "正常に運転しています"}],
-            "itemLong": [{"trainLine": "中央線", "status": "遅延", "textLong": "一部遅れあり"}],
+            "item": [
+                {
+                    "trainLine": "山手線",
+                    "status": "平常",
+                    "textLong": "正常に運転しています",
+                }
+            ],
+            "itemLong": [
+                {"trainLine": "中央線", "status": "遅延", "textLong": "一部遅れあり"}
+            ],
         }
     }
 

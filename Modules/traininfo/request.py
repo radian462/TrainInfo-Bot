@@ -3,7 +3,9 @@ from dataclasses import dataclass
 
 import requests
 from bs4 import BeautifulSoup
+
 from Modules.make_logger import make_logger
+from Modules.traininfo.normalizer import status_normalizer
 
 logger = make_logger("request")
 session = requests.session()
@@ -26,10 +28,14 @@ def request_from_NHK(region_id: int | str) -> tuple[TrainStatus, ...] | None:
             response.json()["channel"]["item"] + response.json()["channel"]["itemLong"]
         )
         return tuple(
-            TrainStatus(train=o["trainLine"], status=o["status"], detail=o["textLong"])
+            TrainStatus(
+                train=o["trainLine"],
+                status=status_normalizer(o["status"]),
+                detail=o["textLong"],
+            )
             for o in original_data
         )
-        
+
     except Exception:
         logger.error("An error occurred", exc_info=True)
         return None
@@ -65,12 +71,12 @@ def request_from_yahoo(region_id: int | str) -> tuple[TrainStatus, ...] | None:
                 TrainStatus(
                     train=r.get("displayName"),
                     detail=r.get("diainfo", [])[0].get("message"),
-                    status=r.get("diainfo", [])[0].get("status"),
+                    status=status_normalizer(r.get("diainfo", [])[0].get("status")),
                 )
                 for r in incident_rails
             )
         else:
             return None
     except Exception as e:
-        logger.error("An error occurred", exc_info=True)     
+        logger.error("An error occurred", exc_info=True)
         return None
