@@ -81,42 +81,6 @@ class TrainInfo:
             self.logger.error("An error occurred", exc_info=True)
             return None
 
-    def request_sub_source(self) -> Optional[list[dict]]:
-        try:
-            url = "https://mainichi.jp/traffic/etc/a.html"
-            response = requests.get(url)
-            match = re.search(
-                f'{self.region}エリア(.*?)<td colspan="3">',
-                re.sub("<strong>", "\n", response.text),
-                re.DOTALL,
-            )
-            if match is not None:
-                region_html = match.group(1)
-                soup = BeautifulSoup(region_html, "html.parser")
-
-                region_text = re.sub("\n\n", "", soup.get_text())
-                data_list = [
-                    t for t in region_text.split() if re.search(r"[ぁ-ゖァ-ヶ一-龍]", t)
-                ]
-
-                train = [data_list[i] for i in range(0, len(data_list), 3)]
-                status = [data_list[i + 1] for i in range(0, len(data_list) - 1, 3)]
-                detail = [data_list[i + 2] for i in range(0, len(data_list) - 2, 3)]
-                data = [
-                    {"train": t, "status": s, "detail": d}
-                    for t, s, d in zip(train, status, detail)
-                ]
-
-                self.logger.info("Get data from sub source")
-
-                return data
-            else:
-                return []
-
-        except Exception:
-            self.logger.error("An error occurred", exc_info=True)
-            return None
-
     def format_data(self, data) -> list[dict]:
         try:
             for d in data:

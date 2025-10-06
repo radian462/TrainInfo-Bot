@@ -1,7 +1,7 @@
-from enum import Enum
 import os
 import time
 from datetime import datetime
+from enum import Enum
 from threading import Thread
 
 from dotenv import load_dotenv
@@ -63,7 +63,7 @@ class BlueskyManager:
         self.bluesky_execute(messages)
 
 
-class RegionalManager:
+class ServiceManager:
     def __init__(
         self,
         service: Service,
@@ -83,7 +83,7 @@ class RegionalManager:
 
 
 def main():
-    managers = [RegionalManager(Service.BLUESKY, region) for region in Region]
+    managers = [ServiceManager(Service.BLUESKY, region) for region in Region]
 
     interval = 10
     while True:

@@ -1,0 +1,76 @@
+import json
+from dataclasses import dataclass
+
+import requests
+from bs4 import BeautifulSoup
+from Modules.make_logger import make_logger
+
+logger = make_logger("request")
+session = requests.session()
+
+
+@dataclass(frozen=True)
+class TrainStatus:
+    train: str
+    status: str
+    detail: str
+
+
+def request_from_NHK(region_id: int | str) -> tuple[TrainStatus, ...] | None:
+    try:
+        url = f"https://www.nhk.or.jp/n-data/traffic/train/traininfo_area_0{region_id}.json"
+        response = requests.get(url)
+        response.raise_for_status()
+
+        original_data = (
+            response.json()["channel"]["item"] + response.json()["channel"]["itemLong"]
+        )
+        return tuple(
+            TrainStatus(train=o["trainLine"], status=o["status"], detail=o["textLong"])
+            for o in original_data
+        )
+        
+    except Exception:
+        logger.error("An error occurred", exc_info=True)
+        return None
+
+
+def request_from_yahoo(region_id: int | str) -> tuple[TrainStatus, ...] | None:
+    try:
+        url = "https://transit.yahoo.co.jp/diainfo/area/" + str(region_id)
+        r = session.get(url)
+        r.raise_for_status()
+
+        soup = BeautifulSoup(r.content, "html.parser")
+        next_data = soup.find("script", id="__NEXT_DATA__")
+
+        if next_data:
+            data = json.loads(next_data.string)
+            diainfo_features = (
+                data.get("props", {})
+                .get("pageProps", {})
+                .get("diainfoTrainFeatures", [])
+            )
+
+            extracted = [
+                item for r in diainfo_features if isinstance(r, list) for item in r
+            ]
+            incident_rails = [
+                r.get("routeInfo", {}).get("property", {})
+                for r in extracted
+                if "diainfo" in r.get("routeInfo", {}).get("property", {})
+            ]
+
+            return tuple(
+                TrainStatus(
+                    train=r.get("displayName"),
+                    detail=r.get("diainfo", [])[0].get("message"),
+                    status=r.get("diainfo", [])[0].get("status"),
+                )
+                for r in incident_rails
+            )
+        else:
+            return None
+    except Exception as e:
+        logger.error("An error occurred", exc_info=True)     
+        return None
