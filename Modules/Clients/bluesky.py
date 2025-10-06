@@ -55,7 +55,7 @@ class Bluesky:
         url = HOST + "com.atproto.server.refreshSession"
         headers = {
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {self.refreshjwt}"
+            "Authorization": f"Bearer {self.refreshjwt}",
         }
 
         response = requests.post(url, headers=headers)
@@ -70,12 +70,11 @@ class Bluesky:
             return {
                 "repo": parsed_uri.netloc,
                 "collection": parsed_uri.path.split("/")[1],
-                "rkey": parsed_uri.path.split("/")[2]
+                "rkey": parsed_uri.path.split("/")[2],
             }
         except Exception:
             self.logger.error("An error occurred", exc_info=True)
             return {}
-
 
     def _get_reply_refs(self, uri: str) -> dict:
         try:
@@ -114,7 +113,6 @@ class Bluesky:
         except Exception:
             self.logger.error("An error occurred", exc_info=True)
             return {}
-
 
     def post(self, text: str, reply_to: Optional[dict] = None) -> dict:
         try:

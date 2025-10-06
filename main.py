@@ -15,39 +15,35 @@ healthcheck()
 load_dotenv()
 logger = make_logger("main")
 
+
 class Region(Enum):
-    KANTO = "関東"
-    KANSAI = "関西"
+    KANTO = "kanto"
+    KANSAI = "kansai"
 
-class RegionalManager:
-    def __init__(self, region):
-        self.account_datas = {
-            "関東": {
-                "Bluesky": {
-                    "name": os.getenv(f"BLUESKY_KANTO_NAME"),
-                    "password": os.getenv(f"BLUESKY_KANTO_PASS"),
-                }
-            },
-            "関西": {
-                "Bluesky": {
-                    "name": os.getenv(f"BLUESKY_KANSAI_NAME"),
-                    "password": os.getenv(f"BLUESKY_KANSAI_PASS"),
-                }
-            },
-        }
 
-        self.logger = make_logger(region)
+class Service(Enum):
+    BLUESKY = "BlueSky"
+
+
+class BlueskyManager:
+    def __init__(
+        self,
+        region: Region,
+    ):
+        self.logger = make_logger(f"BlueSky[{region.value}]")
 
         self.region = region
         self.train_info = TrainInfo(region)
 
         self.bluesky = Bluesky()
-        self.bluesky.login(
-            self.account_datas[self.region]["Bluesky"]["name"],
-            self.account_datas[self.region]["Bluesky"]["password"],
-        )
+        self.bluesky.login(*self.get_auth())
 
         self.logger.info("Logged in Bluesky")
+
+    def get_auth(self):
+        return os.getenv(f"BLUESKY_{self.region.value.upper()}_NAME"), os.getenv(
+            f"BLUESKY_{self.region.value.upper()}_PASS"
+        )
 
     def bluesky_execute(self, messages: list[str]):
         post = None
@@ -66,9 +62,27 @@ class RegionalManager:
         self.bluesky_execute(messages)
 
 
+class RegionalManager:
+    def __init__(
+        self,
+        service: Service,
+        region: Region,
+    ):
+        self.service = service
+        self.region = region
+
+        match self.service:
+            case Service.BLUESKY:
+                self.manager = BlueskyManager(region)
+            case _:
+                raise ValueError("Unsupported service")
+
+    def execute(self):
+        self.manager.execute()
+
+
 def main():
-    regions = ["関東", "関西"]
-    managers = [RegionalManager(region) for region in regions]
+    managers = [RegionalManager(Service.BLUESKY, region) for region in Region]
 
     interval = 10
     while True:
