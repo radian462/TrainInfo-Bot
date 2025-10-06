@@ -41,7 +41,7 @@ def sample_yahoo_html():
                                             "displayName": "山手線",
                                             "diainfo": [
                                                 {
-                                                    "status": "遅延",
+                                                    "status": "列車遅延",
                                                     "message": "大幅な遅れがあります。"
                                                 }
                                             ]
@@ -84,7 +84,7 @@ def test_request_from_yahoo(mock_get, sample_yahoo_html):
     assert isinstance(result, tuple)
     assert len(result) == 1
     assert result[0].train == "山手線"
-    assert result[0].status == "遅延"
+    assert result[0].status == "🕒列車遅延"
 
 
 @patch("Modules.traininfo.request.session.get")
