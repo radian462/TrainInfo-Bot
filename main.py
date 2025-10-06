@@ -40,12 +40,13 @@ class BlueskyManager:
 
         self.logger.info("Logged in Bluesky")
 
-    def get_auth(self):
-        return os.getenv(f"BLUESKY_{self.region.value.upper()}_NAME"), os.getenv(
-            f"BLUESKY_{self.region.value.upper()}_PASS"
+    def get_auth(self) -> tuple[str, str]:
+        return (
+            os.getenv(f"BLUESKY_{self.region.value.upper()}_NAME"),
+            os.getenv(f"BLUESKY_{self.region.value.upper()}_PASS"),
         )
 
-    def bluesky_execute(self, messages: list[str]):
+    def bluesky_execute(self, messages: list[str]) -> None:
         post = None
         if messages == ["運行状況に変更はありません。"]:
             self.logger.info("Pending for the same post")
@@ -56,7 +57,7 @@ class BlueskyManager:
 
             self.logger.info("Done with posted")
 
-    def execute(self):
+    def execute(self) -> None:
         data = self.train_info.request()
         messages = self.train_info.make_message(data)
         self.bluesky_execute(messages)
@@ -77,7 +78,7 @@ class RegionalManager:
             case _:
                 raise ValueError("Unsupported service")
 
-    def execute(self):
+    def execute(self) -> None:
         self.manager.execute()
 
 
