@@ -4,8 +4,8 @@ from dataclasses import dataclass
 import requests
 from bs4 import BeautifulSoup
 
-from Modules.make_logger import make_logger
-from Modules.traininfo.normalizer import status_normalizer
+from ..make_logger import make_logger
+from .normalizer import status_normalizer
 
 logger = make_logger("request")
 session = requests.session()

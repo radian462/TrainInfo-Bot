@@ -1,4 +1,13 @@
+from .normalizer import STATUS_EMOJI, status_normalizer
 from .request import TrainStatus
+
+ORDER_PRIORITY = {
+    status_normalizer(key): i for i, (key, value) in enumerate(STATUS_EMOJI.items())
+}
+
+
+def sort_status(trains: tuple[TrainStatus, ...]) -> tuple[TrainStatus, ...]:
+    return tuple(sorted(trains, key=lambda t: ORDER_PRIORITY.get(t.status, 999)))
 
 
 def create_message(
@@ -9,6 +18,9 @@ def create_message(
 
     if latest == previous:
         return ["運行状況に変更はありません。"]
+
+    latest = sort_status(latest)
+    previous = sort_status(previous)
 
     previous_dict = {p.train: p for p in previous}
     incident_to_another = [
