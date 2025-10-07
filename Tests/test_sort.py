@@ -1,7 +1,5 @@
 from types import SimpleNamespace
 
-import pytest
-
 from Modules.traininfo.message import sort_status
 
 TrainStatus = SimpleNamespace

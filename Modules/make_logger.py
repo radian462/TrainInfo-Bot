@@ -1,4 +1,4 @@
-from logging import DEBUG, Formatter, StreamHandler, getLogger
+from logging import DEBUG, Formatter, getLogger
 
 from rich.logging import RichHandler
 

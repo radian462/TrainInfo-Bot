@@ -1,5 +1,3 @@
-import pytest
-
 from Modules.traininfo.normalizer import status_normalizer
 
 

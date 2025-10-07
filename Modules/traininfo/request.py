@@ -77,6 +77,6 @@ def request_from_yahoo(region_id: int | str) -> tuple[TrainStatus, ...] | None:
             )
         else:
             return None
-    except Exception as e:
+    except Exception:
         logger.error("An error occurred", exc_info=True)
         return None

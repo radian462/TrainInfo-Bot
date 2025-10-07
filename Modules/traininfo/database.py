@@ -2,10 +2,14 @@ import json
 import os
 from dataclasses import asdict
 
+from dotenv import load_dotenv
 from redis import Redis
 
 from ..make_logger import make_logger
 from .request import TrainStatus
+
+load_dotenv()
+logger = make_logger("database")
 
 r: Redis | None = None
 if os.getenv("UPSTASH_PORT"):
@@ -17,8 +21,8 @@ if os.getenv("UPSTASH_PORT"):
         decode_responses=True,
     )
 
-
-logger = make_logger("database")
+if r is None:
+    logger.warning("Redis client is not initialized.")
 
 
 def set_latest_status(region_db: str, data: list[TrainStatus]) -> None:

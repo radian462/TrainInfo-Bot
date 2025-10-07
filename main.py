@@ -2,16 +2,14 @@ import os
 import time
 from datetime import datetime
 from enum import Enum
-from threading import ThreadPoolExecutor
+from threading import Thread
 
-import schedule
 from dotenv import load_dotenv
 
 from Modules.Clients.bluesky import Bluesky
 from Modules.healthcheck import healthcheck
 from Modules.make_logger import make_logger
-from Modules.traininfo.database import (TrainStatus, get_previous_status,
-                                        set_latest_status)
+from Modules.traininfo.database import get_previous_status, set_latest_status
 from Modules.traininfo.message import create_message
 from Modules.traininfo.request import request_from_NHK, request_from_yahoo
 
@@ -46,13 +44,16 @@ class BlueskyManager:
         self,
         region: Region,
     ):
-        self.logger = make_logger(f"BlueSky[{region.label}]")
+        self.logger = make_logger(region.label)
         self.region = region
 
         self.bluesky = Bluesky()
-        self.bluesky.login(*self.get_auth())
-
-        self.logger.info("Logged in Bluesky")
+        try:
+            self.bluesky.login(*self.get_auth())
+            self.logger.info("Logged in Bluesky")
+        except Exception as e:
+            self.logger.fatal("Failed to login Bluesky", exc_info=True)
+            raise e
 
     def get_auth(self) -> tuple[str, str]:
         return (
@@ -69,38 +70,37 @@ class BlueskyManager:
             if data is None:
                 self.logger.warning("No data from NHK, try Yahoo")
                 data = request_from_yahoo(self.region.id)
-        except Exception as e:
-            self.logger.error(f"Failed to get data", exc_info=True)
-            return
 
-        if data is None:
-            self.logger.error("No data received from both NHK and Yahoo")
+            if data is None:
+                self.logger.error("No data received from both NHK and Yahoo")
+                return
+        except Exception:
+            self.logger.error("Failed to get data", exc_info=True)
             return
 
         try:
             previous = get_previous_status(self.get_table_name())
-        except Exception as e:
-            self.logger.error(f"Failed to get previous data", exc_info=True)
+        except Exception:
+            self.logger.error("Failed to get previous data", exc_info=True)
             previous = tuple()
-
-        try:
-            set_latest_status(self.get_table_name(), data)
-        except Exception as e:
-            self.logger.error(f"Failed to save data", exc_info=True)
 
         messages = create_message(data, previous)
         if messages == ["運行状況に変更はありません。"]:
             self.logger.info("No changes in train status")
             return
 
+        try:
+            set_latest_status(self.get_table_name(), data)
+        except Exception:
+            self.logger.error("Failed to save data", exc_info=True)
+
+        post = None
         for i, message in enumerate(messages):
             try:
-                self.bluesky.post_status(message, visibility="public")
-                self.logger.info(f"Completed to post {i+1}/{len(messages)}")
-            except Exception as e:
-                self.logger.error(f"Failed to post message", exc_info=True)
-
-        self.logger.info("Done all posts")
+                post = self.bluesky.post(message, post)
+                self.logger.info(f"Completed posting to Bluesky {i+1}/{len(messages)}")
+            except Exception:
+                self.logger.error("Failed to post message", exc_info=True)
 
 
 class ServiceManager:
@@ -125,19 +125,26 @@ class ServiceManager:
 def main():
     managers = [ServiceManager(Service.BLUESKY, region) for region in Region]
 
-    def job():
-        logger.info("Starting scheduled job...")
-        with ThreadPoolExecutor(max_workers=len(managers)) as executor:
-            executor.map(lambda m: m.execute(), managers)
-
     interval = 10
-    schedule.every(interval).minutes.do(job)
-    logger.info(f"Scheduler started, running every {interval} minutes")
-
     while True:
-        schedule.run_pending()
-        time.sleep(1)
+        minutes, seconds = datetime.now().minute, datetime.now().second
 
+        threads = []
+        if minutes % interval == 0:
+            threads = [Thread(target=manager.execute) for manager in managers]
+            for thread in threads:
+                thread.start()
+
+            for thread in threads:
+                thread.join()
+
+            threads = []
+
+        next_minute = (minutes // interval + 1) * interval
+        wait_time = (next_minute - minutes) * 60 - seconds
+        logger.info(f"Sleep {wait_time} seconds")
+        logger.info(f"Next execution at {next_minute:02d}:00")
+        time.sleep(wait_time)
 
 
 if __name__ == "__main__":

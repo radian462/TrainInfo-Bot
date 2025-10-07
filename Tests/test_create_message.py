@@ -1,7 +1,5 @@
 from types import SimpleNamespace
 
-import pytest
-
 TrainStatus = SimpleNamespace
 
 from Modules.traininfo.message import create_message

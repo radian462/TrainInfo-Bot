@@ -1,5 +1,8 @@
+from ..make_logger import make_logger
 from .normalizer import STATUS_EMOJI, status_normalizer
 from .request import TrainStatus
+
+logger = make_logger("message")
 
 ORDER_PRIORITY = {
     status_normalizer(key): i for i, (key, value) in enumerate(STATUS_EMOJI.items())
@@ -12,10 +15,7 @@ def sort_status(trains: tuple[TrainStatus, ...]) -> tuple[TrainStatus, ...]:
 
 def create_message(
     latest: tuple[TrainStatus, ...], previous: tuple[TrainStatus, ...], width: int = 300
-) -> list[str] | None:
-    if not latest or not previous:
-        return None
-
+) -> list[str]:
     if latest == previous:
         return ["運行状況に変更はありません。"]
 
@@ -54,7 +54,8 @@ def create_message(
         messages.append(f"{r.train} : {r.status}\n{r.detail}")
 
     if not messages:
-        return None
+        logger.info("No changes detected after processing.")
+        return []
 
     splited_messages = []
     temp_message = ""
