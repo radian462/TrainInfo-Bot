@@ -1,7 +1,10 @@
-FROM python:3.12.6
+FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 WORKDIR /bot
-COPY requirements.txt /bot/
-RUN pip install -r requirements.txt
-EXPOSE 8080
+
+ENV UV_SYSTEM_PYTHON=1
+COPY pyproject.toml uv.lock* ./
+RUN uv sync --frozen --no-dev
 COPY . /bot
-CMD python main.py
+
+EXPOSE 8080
+CMD ["uv", "run", "main.py"]

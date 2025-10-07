@@ -2,7 +2,8 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from Modules.traininfo.request import TrainStatus, request_from_NHK, request_from_yahoo
+from Modules.traininfo.request import (TrainStatus, request_from_NHK,
+                                       request_from_yahoo)
 
 
 @pytest.fixture

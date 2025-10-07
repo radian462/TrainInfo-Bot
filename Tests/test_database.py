@@ -1,10 +1,8 @@
 # test_database.py
 from unittest.mock import patch
-from Modules.traininfo.database import (
-    set_latest_status,
-    get_previous_status,
-    TrainStatus,
-)
+
+from Modules.traininfo.database import (TrainStatus, get_previous_status,
+                                        set_latest_status)
 
 
 @patch("Modules.traininfo.database.r")

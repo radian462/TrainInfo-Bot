@@ -1,5 +1,5 @@
 import json
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 
 import requests
 from bs4 import BeautifulSoup
@@ -21,7 +21,7 @@ class TrainStatus:
 def request_from_NHK(region_id: int | str) -> tuple[TrainStatus, ...] | None:
     try:
         url = f"https://www.nhk.or.jp/n-data/traffic/train/traininfo_area_0{region_id}.json"
-        response = requests.get(url)
+        response = requests.get(url, timeout=10)
         response.raise_for_status()
 
         original_data = (
@@ -44,7 +44,7 @@ def request_from_NHK(region_id: int | str) -> tuple[TrainStatus, ...] | None:
 def request_from_yahoo(region_id: int | str) -> tuple[TrainStatus, ...] | None:
     try:
         url = "https://transit.yahoo.co.jp/diainfo/area/" + str(region_id)
-        r = session.get(url)
+        r = session.get(url, timeout=10)
         r.raise_for_status()
 
         soup = BeautifulSoup(r.content, "html.parser")
