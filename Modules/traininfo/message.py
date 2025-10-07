@@ -4,6 +4,7 @@ from .request import TrainStatus
 
 logger = make_logger("message")
 
+DEFAULT_MESSAGE = "現在、ほぼ平常通り運転しています。"
 ORDER_PRIORITY = {
     status_normalizer(key): i for i, (key, value) in enumerate(STATUS_EMOJI.items())
 }
@@ -16,9 +17,6 @@ def sort_status(trains: tuple[TrainStatus, ...]) -> tuple[TrainStatus, ...]:
 def create_message(
     latest: tuple[TrainStatus, ...], previous: tuple[TrainStatus, ...], width: int = 300
 ) -> list[str]:
-    if latest == previous:
-        return ["運行状況に変更はありません。"]
-
     latest = sort_status(latest)
     previous = sort_status(previous)
 
@@ -38,17 +36,20 @@ def create_message(
         if (p := previous_dict.get(l.train)) and l.status == p.status != "🚋平常運転"
     ]
 
+    if not new_incidents and not incident_to_another and not resolved_incidents:
+        return ["運行状況に変更はありません。"]
+
     messages = []
+
     for r in incident_to_another:
-        messages.append(
-            f"{r.train} : {previous_dict[r.train].status}➡️{r.status}\n{r.detail}"
-        )
+        prev = previous_dict[r.train]
+        messages.append(f"{r.train} : {prev.status}➡️{r.status}\n{r.detail}")
 
     for r in new_incidents:
         messages.append(f"{r.train} : 🚋平常運転➡️{r.status}\n{r.detail}")
 
     for r in resolved_incidents:
-        messages.append(f"{r.train} : {r.status}➡️🚋平常運転\n{r.detail}")
+        messages.append(f"{r.train} : {r.status}➡️🚋平常運転\n{DEFAULT_MESSAGE}")
 
     for r in unchanged_incidents:
         messages.append(f"{r.train} : {r.status}\n{r.detail}")
