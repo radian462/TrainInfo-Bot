@@ -49,6 +49,7 @@ def test_unchanged_incident():
         == "中央線 : 🚋平常運転➡️🚋遅延\n線路内立ち入り\n\n山手線 : 🚋遅延\n5分程度の遅れ"
     )
 
+
 def test_normal_to_none():
     previous = (TrainStatus(train="山手線", status="🚋平常運転", detail="問題なし"),)
     latest = tuple()
@@ -57,6 +58,7 @@ def test_normal_to_none():
     assert result is not None
     assert result[0] == "運行状況に変更はありません。"
 
+
 def test_incident_to_none():
     previous = (TrainStatus(train="山手線", status="🚋遅延", detail="5分程度の遅れ"),)
     latest = tuple()
@@ -64,6 +66,7 @@ def test_incident_to_none():
     result = create_message(latest, previous)
     assert result is not None
     assert result[0] == "山手線 : 🚋遅延➡️🚋平常運転\n現在、ほぼ平常通り運転しています。"
+
 
 def test_none_to_incident():
     previous = tuple()

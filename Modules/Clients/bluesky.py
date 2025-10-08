@@ -51,19 +51,6 @@ class Bluesky:
             self.logger.error("An error occurred", exc_info=True)
             return None
 
-    def _refresh_token(self):
-        url = HOST + "com.atproto.server.refreshSession"
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {self.refreshjwt}",
-        }
-
-        response = requests.post(url, headers=headers)
-        session_data = response.json()
-
-        self.accessjwt = session_data.get("accessJwt")
-        self.refreshjwt = session_data.get("refreshJwt")
-
     def _parse_uri(self, uri: str) -> dict:
         try:
             parsed_uri = urlparse(uri)
