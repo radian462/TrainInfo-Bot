@@ -127,7 +127,7 @@ class ServiceManager:
 def main():
     managers = [ServiceManager(Service.BLUESKY, region) for region in Region]
 
-    interval = 10
+    interval = 10  # minutes
     while True:
         minutes, seconds = datetime.now().minute, datetime.now().second
 
