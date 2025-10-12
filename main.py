@@ -98,7 +98,9 @@ class BlueskyManager:
         for i, message in enumerate(messages):
             try:
                 post = self.bluesky.post(message, post)
-                self.logger.info(f"Completed posting to Bluesky {i+1}/{len(messages)}")
+                self.logger.info(
+                    f"Completed posting to Bluesky {i + 1}/{len(messages)}"
+                )
             except Exception:
                 self.logger.error("Failed to post message", exc_info=True)
 
