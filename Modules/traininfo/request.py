@@ -37,7 +37,7 @@ def request_from_NHK(region_id: int | str) -> tuple[TrainStatus, ...] | None:
         )
 
     except Exception:
-        logger.error("An error occurred", exc_info=True)
+        logger.error("Failed to get data from NHK", exc_info=True)
         return None
 
 
@@ -78,5 +78,5 @@ def request_from_yahoo(region_id: int | str) -> tuple[TrainStatus, ...] | None:
         else:
             return None
     except Exception:
-        logger.error("An error occurred", exc_info=True)
+        logger.error("Failed to get data from Yahoo", exc_info=True)
         return None

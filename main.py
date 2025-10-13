@@ -44,7 +44,7 @@ class BlueskyManager:
         self,
         region: Region,
     ):
-        self.logger = make_logger(region.label)
+        self.logger = make_logger("Bluesky", context=region.label)
         self.region = region
 
         self.bluesky = Bluesky()
@@ -68,12 +68,15 @@ class BlueskyManager:
         try:
             data = request_from_NHK(self.region.id)
             if data is None:
-                self.logger.warning("No data from NHK, try Yahoo")
+                self.logger.warning("No data from NHK, trying Yahoo...")
                 data = request_from_yahoo(self.region.id)
-
-            if data is None:
-                self.logger.error("No data received from both NHK and Yahoo")
-                return
+                if data is not None:
+                    self.logger.info("Data received from Yahoo")
+                else:
+                    self.logger.error("No data received from both NHK and Yahoo")
+                    return
+            else:
+                self.logger.info("Data received from NHK") 
         except Exception:
             self.logger.error("Failed to get data", exc_info=True)
             return
@@ -127,7 +130,7 @@ class ServiceManager:
 def main():
     managers = [ServiceManager(Service.BLUESKY, region) for region in Region]
 
-    interval = 10  # minutes
+    interval = 10
     while True:
         minutes, seconds = datetime.now().minute, datetime.now().second
 
