@@ -19,6 +19,7 @@ logger = make_logger("main")
 
 DEBUG = os.getenv("DEBUG", "False").lower() == "true"
 
+
 class Region(Enum):
     KANTO = ("kanto", 4)
     KANSAI = ("kansai", 6)
@@ -45,7 +46,7 @@ class BlueskyManager:
         self,
         region: Region,
     ):
-        self.logger = make_logger("Bluesky", context=region.label)
+        self.logger = make_logger(Service.BLUESKY.value, context=region.label)
         self.region = region
 
         self.bluesky = Bluesky()
@@ -53,7 +54,7 @@ class BlueskyManager:
             self.bluesky.login(*self.get_auth())
             self.logger.info("Logged in Bluesky")
         except Exception as e:
-            self.logger.fatal("Failed to login Bluesky", exc_info=True)
+            self.logger.critical("Failed to login Bluesky", exc_info=True)
             raise e
 
     def get_auth(self) -> tuple[str, str]:
@@ -77,7 +78,7 @@ class BlueskyManager:
                     self.logger.error("No data received from both NHK and Yahoo")
                     return
             else:
-                self.logger.info("Data received from NHK") 
+                self.logger.info("Data received from NHK")
         except Exception:
             self.logger.error("Failed to get data", exc_info=True)
             return

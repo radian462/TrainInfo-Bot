@@ -188,7 +188,9 @@ class Bluesky:
                 "record": {
                     "$type": "app.bsky.feed.post",
                     "text": text,
-                    "createdAt": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
+                    "createdAt": datetime.now(timezone.utc).strftime(
+                        "%Y-%m-%dT%H:%M:%S.%fZ"
+                    ),
                 },
             }
 
