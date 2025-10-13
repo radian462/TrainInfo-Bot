@@ -7,4 +7,4 @@ RUN uv sync --frozen --no-dev
 COPY . /bot
 
 EXPOSE 8080
-CMD ["uv", "run", "main.py"]
+CMD ["uv", "run", "main.py", "--no-dev"]
