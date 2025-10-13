@@ -17,6 +17,7 @@ healthcheck()
 load_dotenv()
 logger = make_logger("main")
 
+DEBUG = os.getenv("DEBUG", "False").lower() == "true"
 
 class Region(Enum):
     KANTO = ("kanto", 4)
@@ -130,7 +131,7 @@ class ServiceManager:
 def main():
     managers = [ServiceManager(Service.BLUESKY, region) for region in Region]
 
-    interval = 10
+    interval = 10 if not DEBUG else 1
     while True:
         minutes, seconds = datetime.now().minute, datetime.now().second
 
