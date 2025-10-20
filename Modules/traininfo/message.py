@@ -5,14 +5,18 @@ from .request import TrainStatus
 logger = make_logger("message")
 
 DEFAULT_MESSAGE = "現在、ほぼ平常通り運転しています。"
-ORDER_PRIORITY = {status_normalizer(key): i for i, (key, value) in enumerate(STATUS_EMOJI.items())}
+ORDER_PRIORITY = {
+    status_normalizer(key): i for i, (key, value) in enumerate(STATUS_EMOJI.items())
+}
 
 
 def sort_status(trains: tuple[TrainStatus, ...]) -> tuple[TrainStatus, ...]:
     return tuple(sorted(trains, key=lambda t: ORDER_PRIORITY.get(t.status, 999)))
 
 
-def create_message(latest: tuple[TrainStatus, ...], previous: tuple[TrainStatus, ...], width: int = 300) -> list[str]:
+def create_message(
+    latest: tuple[TrainStatus, ...], previous: tuple[TrainStatus, ...], width: int = 300
+) -> list[str]:
     latest = sort_status(latest)
     previous = sort_status(previous)
 
