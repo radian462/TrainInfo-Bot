@@ -1,10 +1,6 @@
-import logging
 from threading import Thread
 
 from bottle import route, run
-
-l = logging.getLogger()
-l.addHandler(logging.FileHandler("/dev/null"))
 
 
 @route("/")

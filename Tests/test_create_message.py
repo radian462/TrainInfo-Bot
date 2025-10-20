@@ -1,8 +1,8 @@
 from types import SimpleNamespace
 
-TrainStatus = SimpleNamespace
-
 from Modules.traininfo.message import create_message
+
+TrainStatus = SimpleNamespace
 
 
 def test_incident_to_another():

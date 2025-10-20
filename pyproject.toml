@@ -22,7 +22,14 @@ dev = [
 pythonpath = ["."]
 
 [tool.ruff]
-line-length = 88 
+line-length = 88
+fix = true
 
+[tool.ruff.lint]
+select = ["I", "E", "F", "W"]
+ignore = ["E501"] # line too long
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
 
 
