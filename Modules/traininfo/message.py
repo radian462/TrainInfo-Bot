@@ -22,7 +22,9 @@ def create_message(
 
     previous_dict = {p.train: p for p in previous}
     incident_to_another = [
-        ts for ts in latest if (p := previous_dict.get(ts.train)) and ts.status != p.status
+        ts
+        for ts in latest
+        if (p := previous_dict.get(ts.train)) and ts.status != p.status
     ]
     new_incidents = [ts for ts in latest if ts.train not in previous_dict]
     resolved_incidents = [
