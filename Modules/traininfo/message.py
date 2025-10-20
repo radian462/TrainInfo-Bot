@@ -12,9 +12,7 @@ def sort_status(trains: tuple[TrainStatus, ...]) -> tuple[TrainStatus, ...]:
     return tuple(sorted(trains, key=lambda t: ORDER_PRIORITY.get(t.status, 999)))
 
 
-def create_message(
-    latest: tuple[TrainStatus, ...], previous: tuple[TrainStatus, ...], width: int = 300
-) -> list[str]:
+def create_message(latest: tuple[TrainStatus, ...], previous: tuple[TrainStatus, ...], width: int = 300) -> list[str]:
     latest = sort_status(latest)
     previous = sort_status(previous)
 
