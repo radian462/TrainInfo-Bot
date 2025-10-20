@@ -2,17 +2,17 @@ repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.14.1
     hooks:
-      # ruff format
-      - id: ruff-format
-        name: ruff format
-        description: Format code with ruff
-        
       # ruff check
       - id: ruff
         name: ruff check
         description: Lint code with ruff
         args: [--fix]
 
+      # ruff format
+      - id: ruff-format
+        name: ruff format
+        description: Format code with ruff
+        
   # pytest
   - repo: local
     hooks:
@@ -22,4 +22,4 @@ repos:
         language: system
         pass_filenames: false
         always_run: true
-        stages: [commit]
+        stages: [pre-commit]

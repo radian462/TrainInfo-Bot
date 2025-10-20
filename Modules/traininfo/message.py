@@ -5,9 +5,7 @@ from .request import TrainStatus
 logger = make_logger("message")
 
 DEFAULT_MESSAGE = "現在、ほぼ平常通り運転しています。"
-ORDER_PRIORITY = {
-    status_normalizer(key): i for i, (key, value) in enumerate(STATUS_EMOJI.items())
-}
+ORDER_PRIORITY = {status_normalizer(key): i for i, (key, value) in enumerate(STATUS_EMOJI.items())}
 
 
 def sort_status(trains: tuple[TrainStatus, ...]) -> tuple[TrainStatus, ...]:
