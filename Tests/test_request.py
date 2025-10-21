@@ -58,7 +58,7 @@ def sample_yahoo_html():
     """
 
 
-@patch("Modules.traininfo.request.requests.get")
+@patch("Modules.traininfo.request.session.get")
 def test_request_from_NHK(mock_get, sample_nhk_response):
     mock_response = Mock()
     mock_response.json.return_value = sample_nhk_response

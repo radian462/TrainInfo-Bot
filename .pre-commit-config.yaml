@@ -12,7 +12,6 @@ repos:
       - id: ruff-format
         name: ruff format
         description: Format code with ruff
-        args: [--exit-zero]
         
   # pytest
   - repo: local

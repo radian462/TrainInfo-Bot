@@ -21,12 +21,10 @@ class TrainStatus:
 def request_from_NHK(region_id: int | str) -> tuple[TrainStatus, ...] | None:
     try:
         url = f"https://www.nhk.or.jp/n-data/traffic/train/traininfo_area_0{region_id}.json"
-        response = requests.get(url, timeout=10)
-        response.raise_for_status()
+        r = session.get(url, timeout=10)
+        r.raise_for_status()
 
-        original_data = (
-            response.json()["channel"]["item"] + response.json()["channel"]["itemLong"]
-        )
+        original_data = r.json()["channel"]["item"] + r.json()["channel"]["itemLong"]
         return tuple(
             TrainStatus(
                 train=o["trainLine"],
@@ -80,3 +78,8 @@ def request_from_yahoo(region_id: int | str) -> tuple[TrainStatus, ...] | None:
     except Exception:
         logger.error("Failed to get data from Yahoo", exc_info=True)
         return None
+
+
+if __name__ == "__main__":
+    print(request_from_NHK(3))
+    print(request_from_yahoo(3))
