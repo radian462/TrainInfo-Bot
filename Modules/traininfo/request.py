@@ -40,6 +40,12 @@ def request_from_NHK(region_id: int | str) -> tuple[TrainStatus, ...] | None:
 
 
 def request_from_yahoo(region_id: int | str) -> tuple[TrainStatus, ...] | None:
+    """
+    notes
+    -----
+    このコードはEEA及びイギリスのサーバーでは利用できません。
+    https://privacy.yahoo.co.jp/notice/globalaccess.html
+    """
     try:
         url = "https://transit.yahoo.co.jp/diainfo/area/" + str(region_id)
         r = session.get(url, timeout=10)
