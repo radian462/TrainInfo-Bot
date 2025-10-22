@@ -10,6 +10,8 @@ from Modules.make_logger import make_logger
 class Bluesky:
     def __init__(self):
         self.logger = make_logger("Bluesky")
+        self.session = requests.Session()
+        self.session.headers.update({"Connection": "keep-alive"})
 
         self.handle: str | None = None
         self.did: str | None = None
@@ -29,7 +31,7 @@ class Bluesky:
         try:
             url = self.HOST + self.LOGIN_ENDPOINT
 
-            response = requests.post(
+            response = self.session.post(
                 url,
                 json={"identifier": identifier, "password": password},
                 headers={"Content-Type": "application/json"},
@@ -51,7 +53,7 @@ class Bluesky:
     def _request_refresh_jwt(self) -> None:
         try:
             url = self.HOST + self.REFRESH_SESSION_ENDPOINT
-            response = requests.post(
+            response = self.session.post(
                 url,
                 headers={
                     "Content-Type": "application/json",
@@ -107,7 +109,7 @@ class Bluesky:
             url = self.HOST + self.GET_RECORD_ENDPOINT
             uri_parts = self._parse_uri(uri)
 
-            r = requests.get(url, params=uri_parts, timeout=10)
+            r = self.session.get(url, params=uri_parts, timeout=10)
             r.raise_for_status()
             parent = r.json()
 
@@ -115,7 +117,7 @@ class Bluesky:
             if parent_reply is not None:
                 root_uri = parent_reply.get("root", {}).get("uri")
                 root_repo, root_collection, root_rkey = root_uri.split("/")[2:5]
-                r = requests.get(
+                r = self.session.get(
                     url,
                     params={
                         "repo": root_repo,
@@ -198,7 +200,7 @@ class Bluesky:
             if reply_to:
                 data["record"]["reply"] = self._get_reply_refs(reply_to["uri"])
 
-            response = requests.post(url, json=data, headers=headers, timeout=10)
+            response = self.session.post(url, json=data, headers=headers, timeout=10)
             response.raise_for_status()
 
             return response.json()
