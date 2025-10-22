@@ -43,7 +43,7 @@ def request_from_yahoo(region_id: int | str) -> tuple[TrainStatus, ...] | None:
     """
     notes
     -----
-    このコードはEEA及びイギリスのサーバーでは利用できません。
+    このコードはEEA及びイギリスのサーバーでは利用できません。403が返ってきます。
     https://privacy.yahoo.co.jp/notice/globalaccess.html
     """
     try:
@@ -83,6 +83,16 @@ def request_from_yahoo(region_id: int | str) -> tuple[TrainStatus, ...] | None:
                 for r in incident_rails
             )
         else:
+            return None
+    except requests.HTTPError as e:
+        if e.response.status_code == 403:
+            logger.error(
+                "Access forbidden: Are you accessing from the EEA or the UK? Yahoo blocks requests from those regions.",
+                exc_info=True,
+            )
+            return None
+        else:
+            logger.error("HTTP error occurred", exc_info=True)
             return None
     except Exception:
         logger.error("Failed to get data from Yahoo", exc_info=True)
