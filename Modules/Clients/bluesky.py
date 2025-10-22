@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from typing import Any
 from urllib.parse import urlparse
 
 import requests
@@ -182,7 +183,7 @@ class Bluesky:
                 "Content-Type": "application/json",
                 "Authorization": f"Bearer {self.accessjwt}",
             }
-            data = {
+            data: dict[str, Any] = {
                 "repo": self.handle,
                 "collection": "app.bsky.feed.post",
                 "record": {

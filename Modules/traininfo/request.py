@@ -49,6 +49,9 @@ def request_from_yahoo(region_id: int | str) -> tuple[TrainStatus, ...] | None:
         next_data = soup.find("script", id="__NEXT_DATA__")
 
         if next_data:
+            if next_data.string is None:
+                return None
+
             data = json.loads(next_data.string)
             diainfo_features = (
                 data.get("props", {})

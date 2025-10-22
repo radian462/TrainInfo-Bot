@@ -51,20 +51,33 @@ class BlueskyManager:
 
         self.bluesky = Bluesky()
         try:
-            self.bluesky.login(*self.get_auth())
+            auth = self.get_auth()
+            if auth is None:
+                raise RuntimeError("Failed to get auth credentials")
+            self.bluesky.login(*auth)
             self.logger.info("Logged in Bluesky")
         except Exception as e:
             self.logger.critical("Failed to login Bluesky", exc_info=True)
             raise e
 
-    def get_auth(self) -> tuple[str, str]:
-        return (
-            os.getenv(f"BLUESKY_{self.region.label.upper()}_NAME"),
-            os.getenv(f"BLUESKY_{self.region.label.upper()}_PASS"),
-        )
+    def get_auth(self) -> tuple[str, str] | None:
+        username = os.getenv(f"BLUESKY_{self.region.label.upper()}_NAME")
+        password = os.getenv(f"BLUESKY_{self.region.label.upper()}_PASS")
 
-    def get_table_name(self) -> str:
-        return os.getenv(f"{self.region.label.upper()}_DB")
+        if not username or not password:
+            self.logger.error(f"Bluesky credentials not set for {self.region.label}")
+            return None
+
+        return username, password
+
+    def get_table_name(self) -> str | None:
+        table_name = os.getenv(f"{self.region.label.upper()}_DB")
+
+        if not table_name:
+            self.logger.error(f"DB name not set for {self.region.label}")
+            return None
+
+        return table_name
 
     def execute(self) -> None:
         try:
@@ -83,8 +96,13 @@ class BlueskyManager:
             self.logger.error("Failed to get data", exc_info=True)
             return
 
+        table_name = self.get_table_name()
+
         try:
-            previous = get_previous_status(self.get_table_name())
+            if table_name is not None:
+                previous = get_previous_status(table_name)
+            else:
+                raise RuntimeError("table name is None")
         except Exception:
             self.logger.error("Failed to get previous data", exc_info=True)
             previous = tuple()
@@ -95,7 +113,10 @@ class BlueskyManager:
             return
 
         try:
-            set_latest_status(self.get_table_name(), data)
+            if table_name is not None:
+                set_latest_status(table_name, list(data))
+            else:
+                raise RuntimeError("table name is None")
         except Exception:
             self.logger.error("Failed to save data", exc_info=True)
 

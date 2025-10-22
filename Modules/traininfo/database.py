@@ -12,11 +12,15 @@ load_dotenv()
 logger = make_logger("database")
 
 r: Redis | None = None
-if os.getenv("UPSTASH_PORT"):
+upstash_host = os.getenv("UPSTASH_HOST")
+upstash_port = os.getenv("UPSTASH_PORT")
+upstash_pass = os.getenv("UPSTASH_PASS")
+
+if upstash_host and upstash_port and upstash_pass:
     r = Redis(
-        host=os.getenv("UPSTASH_HOST"),
-        port=int(os.getenv("UPSTASH_PORT")),
-        password=os.getenv("UPSTASH_PASS"),
+        host=upstash_host,
+        port=int(upstash_port),
+        password=upstash_pass,
         ssl=True,
         decode_responses=True,
     )
@@ -26,6 +30,10 @@ if r is None:
 
 
 def set_latest_status(region_db: str, data: list[TrainStatus]) -> None:
+    if r is None:
+        logger.warning("Redis client is not available. Skipping set operation.")
+        return
+
     try:
         set_data = [asdict(s) for s in data]
         r.set(region_db, json.dumps(set_data))
@@ -35,13 +43,17 @@ def set_latest_status(region_db: str, data: list[TrainStatus]) -> None:
 
 
 def get_previous_status(region_db: str) -> tuple[TrainStatus, ...]:
+    if r is None:
+        logger.warning("Redis client is not available. Returning empty tuple.")
+        return tuple()
+
     try:
-        data = r.get(region_db)
-        if data:
-            loaded_data = json.loads(data)
-            return tuple(TrainStatus(**d) for d in loaded_data)
-        else:
-            return None
+        data = r.get(region_db)  # type: ignore[misc]
+        if data is None:
+            return tuple()
+
+        loaded_data = json.loads(data)  # type: ignore[arg-type]
+        return tuple(TrainStatus(**d) for d in loaded_data)
     except Exception:
         logger.error("An error occurred while fetching data from Redis", exc_info=True)
         return tuple()
