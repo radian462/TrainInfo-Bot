@@ -1,0 +1,30 @@
+# Virtual environments
+.venv
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+
+# Environment and secrets
+.env
+
+# Git
+.git
+.gitignore
+
+# Docs
+LICENSE
+README.md
+
+# Cache
+.ruff_cache
+.pytest_cache
+.mypy_cache
+
+# Build artifacts
+*.egg-info
+dist
+build
+
+# Test
+Tests/
