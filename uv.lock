@@ -175,6 +175,17 @@ wheels = [
 ]
 
 [[package]]
+name = "misskey-py"
+version = "4.1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "requests" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/8e/b9/7803ea7ce79f63095fd764807fbe17cd6453c18e64cd9e3331afd7fecbb3/Misskey.py-4.1.0-py3-none-any.whl", hash = "sha256:d118891d0cd59d7e8942870ab2145c78221ec9ea0c9a79e309a473f0a8db96fe", size = 16149, upload-time = "2022-03-03T06:47:47.186Z" },
+]
+
+[[package]]
 name = "mypy"
 version = "1.18.2"
 source = { registry = "https://pypi.org/simple" }
@@ -435,6 +446,7 @@ source = { virtual = "." }
 dependencies = [
     { name = "beautifulsoup4" },
     { name = "bottle" },
+    { name = "misskey-py" },
     { name = "python-dotenv" },
     { name = "redis" },
     { name = "requests" },
@@ -453,6 +465,7 @@ dev = [
 requires-dist = [
     { name = "beautifulsoup4", specifier = ">=4.14.2" },
     { name = "bottle", specifier = ">=0.13.4" },
+    { name = "misskey-py", specifier = ">=4.1.0" },
     { name = "python-dotenv", specifier = ">=1.1.1" },
     { name = "redis", specifier = ">=6.4.0" },
     { name = "requests", specifier = ">=2.32.5" },
