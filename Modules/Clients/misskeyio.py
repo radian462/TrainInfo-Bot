@@ -8,9 +8,11 @@ from .baseclient import BaseSocialClient, PostResponse
 class MisskeyIOClient(BaseSocialClient):
     def __init__(self):
         self.logger = make_logger("MisskeyIO")
-        self.host: str = "https://misskey.io"
+
         self.token: str | None = None
         self.misskey: Misskey | None = None
+
+        self.HOST: str = "https://misskey.io"
 
     def login(self, token: str | None) -> bool:
         if not token:
@@ -18,7 +20,7 @@ class MisskeyIOClient(BaseSocialClient):
             return False
 
         try:
-            self.misskey = Misskey(self.host, i=token)
+            self.misskey = Misskey(self.HOST, i=token)
             meta = self.misskey.meta()
 
             if meta:
