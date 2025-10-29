@@ -13,6 +13,8 @@ class BlueskyClient(BaseSocialClient):
         self.logger = make_logger("Bluesky")
         self.session = requests.Session()
         self.session.headers.update({"Connection": "keep-alive"})
+        self.service_name = "Bluesky"
+        self.post_string_limit = 300
 
         self.handle: str | None = None
         self.did: str | None = None

@@ -7,11 +7,12 @@ from threading import Thread
 from dotenv import load_dotenv
 
 from Modules.Clients.bluesky import BlueskyClient
+from Modules.Clients.misskeyio import MisskeyIOClient
 from Modules.healthcheck import healthcheck
 from Modules.make_logger import make_logger
 from Modules.traininfo.database import get_previous_status, set_latest_status
 from Modules.traininfo.message import create_message
-from Modules.traininfo.request import request_from_NHK, request_from_yahoo
+from Modules.traininfo.request import TrainStatus, request_from_NHK, request_from_yahoo
 
 healthcheck()
 load_dotenv()
@@ -38,31 +39,43 @@ class Region(Enum):
 
 
 class Service(Enum):
-    BLUESKY = "BlueSky"
+    BLUESKY = ("Bluesky", BlueskyClient)
+    MISSKEYIO = ("MisskeyIO", MisskeyIOClient)
+
+    @property
+    def label(self):
+        return self.value[0]
+
+    @property
+    def client(self):
+        return self.value[1]
 
 
-class BlueskyManager:
-    def __init__(
-        self,
-        region: Region,
-    ):
-        self.logger = make_logger(Service.BLUESKY.value, context=region.label)
+class RegionalManager:
+    def __init__(self, region: Region):
         self.region = region
+        self.logger = make_logger("RegionalManager", context=region.label)
+        self.clients = [service.client() for service in Service]
 
-        self.bluesky = BlueskyClient()
-        try:
-            auth = self.get_auth()
-            if auth is None:
-                raise RuntimeError("Failed to get auth credentials")
-            self.bluesky.login(*auth)
-            self.logger.info("Logged in Bluesky")
-        except Exception as e:
-            self.logger.critical("Failed to login Bluesky", exc_info=True)
-            raise e
+        self.login_all()
 
-    def get_auth(self) -> tuple[str, str] | None:
-        username = os.getenv(f"BLUESKY_{self.region.label.upper()}_NAME")
-        password = os.getenv(f"BLUESKY_{self.region.label.upper()}_PASS")
+    def login_all(self) -> bool:
+        is_succeed = [
+            client.login(self.get_auth(service))
+            for service, client in zip(Service, self.clients)
+        ]
+        if all(is_succeed):
+            self.logger.info(f"All clients logged in for {self.region.label}")
+            return True
+        else:
+            self.logger.error(f"Some clients failed to log in for {self.region.label}")
+            return False
+
+    def get_auth(self, service: Service) -> tuple[str, str] | None:
+        service_name = service.label.upper()
+        region = self.region.label.upper()
+        username = os.getenv(f"{service_name}_{region}_NAME")
+        password = os.getenv(f"{service_name}_{region}_PASS")
 
         if not username or not password:
             self.logger.error(f"Bluesky credentials not set for {self.region.label}")
@@ -80,6 +93,22 @@ class BlueskyManager:
         return table_name
 
     def execute(self) -> None:
+        def post(
+            client: BlueskyClient | MisskeyIOClient,
+            data: tuple[TrainStatus, ...],
+            previous: tuple[TrainStatus, ...],
+        ) -> None:
+            messages = create_message(data, previous, width=client.post_string_limit)
+            post = None
+            for i, message in enumerate(messages):
+                try:
+                    post = client.post(message, post.ref if post and post.ref else None)
+                    self.logger.info(
+                        f"Completed posting to {client.service_name} {i + 1}/{len(messages)}"
+                    )
+                except Exception:
+                    self.logger.error("Failed to post message", exc_info=True)
+
         try:
             data = request_from_NHK(self.region.id)
             if data is None:
@@ -120,40 +149,21 @@ class BlueskyManager:
         except Exception:
             self.logger.error("Failed to save data", exc_info=True)
 
-        post = None
-        for i, message in enumerate(messages):
-            try:
-                post = self.bluesky.post(
-                    message, post.ref if post and post.ref else None
-                )
-                self.logger.info(
-                    f"Completed posting to Bluesky {i + 1}/{len(messages)}"
-                )
-            except Exception:
-                self.logger.error("Failed to post message", exc_info=True)
+        threads = [
+            Thread(target=post, args=(client, data, previous))
+            for client in self.clients
+        ]
+        for t in threads:
+            t.start()
 
+        for t in threads:
+            t.join()
 
-class ServiceManager:
-    def __init__(
-        self,
-        service: Service,
-        region: Region,
-    ):
-        self.service = service
-        self.region = region
-
-        match self.service:
-            case Service.BLUESKY:
-                self.manager = BlueskyManager(region)
-            case _:
-                raise ValueError("Unsupported service")
-
-    def execute(self) -> None:
-        self.manager.execute()
+        self.logger.info(f"All posts completed for {self.region.label}")
 
 
 def main():
-    managers = [ServiceManager(Service.BLUESKY, region) for region in Region]
+    managers = [RegionalManager(region) for region in Region]
 
     interval = 10 if not DEBUG else 1
     while True:
@@ -167,8 +177,6 @@ def main():
 
             for thread in threads:
                 thread.join()
-
-            threads = []
 
         next_minute = (minutes // interval + 1) * interval
         wait_time = (next_minute - minutes) * 60 - seconds
