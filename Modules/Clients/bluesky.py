@@ -28,7 +28,11 @@ class BlueskyClient(BaseSocialClient):
         self.GET_RECORD_ENDPOINT = "com.atproto.repo.getRecord"
         self.CREATE_RECORD_ENDPOINT = "com.atproto.repo.createRecord"
 
-    def login(self, identifier: str, password: str) -> bool:
+    def login(self, identifier: str | None, password: str | None) -> bool:
+        if not identifier or not password:
+            self.logger.error("Missing credentials")
+            return False
+
         try:
             url = self.HOST + self.LOGIN_ENDPOINT
 
@@ -52,12 +56,12 @@ class BlueskyClient(BaseSocialClient):
                 return True
         except Exception:
             self.logger.error("An error occurred", exc_info=True)
-            return False
+        return False
 
     def post(
         self,
         text: str,
-        reply_to: dict | None = None,
+        reply_to: str | None = None,
         _retry: bool = True,
     ) -> PostResponse:
         """
@@ -85,7 +89,7 @@ class BlueskyClient(BaseSocialClient):
         try:
             if not self.accessjwt:
                 self.logger.error("Not logged in")
-                return {}
+                return PostResponse(success=False, error="Not logged in")
 
             self._refresh_token()
 

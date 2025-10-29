@@ -123,7 +123,9 @@ class BlueskyManager:
         post = None
         for i, message in enumerate(messages):
             try:
-                post = self.bluesky.post(message, post)
+                post = self.bluesky.post(
+                    message, post.ref if post and post.ref else None
+                )
                 self.logger.info(
                     f"Completed posting to Bluesky {i + 1}/{len(messages)}"
                 )

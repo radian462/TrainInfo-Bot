@@ -13,7 +13,7 @@ class PostResponse:
 
 class BaseSocialClient(ABC):
     @abstractmethod
-    def login(self, *args, **kwargs) -> bool:
+    def login(self, *args: Any, **kwargs: Any) -> bool:
         """
         ログイン処理を行う
 
@@ -26,11 +26,7 @@ class BaseSocialClient(ABC):
 
     @abstractmethod
     def post(
-        self,
-        text: str,
-        reply_to: str | dict | None = None,
-        _retry: bool = True,
-        **kwargs,
+        self, text: str, reply_to: str | None = None, _retry: bool = True
     ) -> PostResponse:
         """
         投稿を行う
