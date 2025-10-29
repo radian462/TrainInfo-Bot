@@ -3,14 +3,17 @@ from misskey.exceptions import MisskeyAPIException
 
 from helpers.make_logger import make_logger
 
-from .baseclient import BaseSocialClient, PostResponse
+from .baseclient import AuthType, BaseSocialClient, PostResponse, Service
 
 
 class MisskeyIOClient(BaseSocialClient):
     def __init__(self):
         self.logger = make_logger("MisskeyIO")
-        self.post_string_limit = 3000
-        self.service_name = "MisskeyIO"
+        super().__init__(
+            service_name=Service.MISSKEYIO,
+            auth_type=AuthType.TOKEN,
+            post_string_limit=3000,
+        )
 
         self.token: str | None = None
         self.misskey: Misskey | None = None

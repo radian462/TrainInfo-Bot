@@ -6,16 +6,19 @@ import requests
 
 from helpers.make_logger import make_logger
 
-from .baseclient import BaseSocialClient, PostResponse
+from .baseclient import AuthType, BaseSocialClient, PostResponse, Service
 
 
 class BlueskyClient(BaseSocialClient):
     def __init__(self):
-        self.logger = make_logger("Bluesky")
+        super().__init__(
+            service_name=Service.BLUESKY,
+            auth_type=AuthType.USERNAME_PASSWORD,
+            post_string_limit=300,
+        )
+        self.logger = make_logger(Service.BLUESKY.label)
         self.session = requests.Session()
         self.session.headers.update({"Connection": "keep-alive"})
-        self.service_name = "Bluesky"
-        self.post_string_limit = 300
 
         self.handle: str | None = None
         self.did: str | None = None

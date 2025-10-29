@@ -6,6 +6,7 @@ from threading import Thread
 
 from dotenv import load_dotenv
 
+from clients.baseclient import AuthType, Service
 from clients.bluesky import BlueskyClient
 from clients.misskeyio import MisskeyIOClient
 from helpers.healthcheck import healthcheck
@@ -38,19 +39,6 @@ class Region(Enum):
         return self._name_str
 
 
-class Service(Enum):
-    BLUESKY = ("Bluesky", BlueskyClient)
-    MISSKEYIO = ("MisskeyIO", MisskeyIOClient)
-
-    @property
-    def label(self):
-        return self.value[0]
-
-    @property
-    def client(self):
-        return self.value[1]
-
-
 class RegionalManager:
     def __init__(self, region: Region):
         self.region = region
@@ -61,7 +49,7 @@ class RegionalManager:
 
     def login_all(self) -> bool:
         is_succeed = [
-            client.login(self.get_auth(service))
+            client.login(self.get_auth(service, client.auth_type))
             for service, client in zip(Service, self.clients)
         ]
         if all(is_succeed):
@@ -71,17 +59,28 @@ class RegionalManager:
             self.logger.error(f"Some clients failed to log in for {self.region.label}")
             return False
 
-    def get_auth(self, service: Service) -> tuple[str, str] | None:
+    def get_auth(self, service: Service, auth_type: AuthType) -> tuple[str, ...] | None:
         service_name = service.label.upper()
         region = self.region.label.upper()
-        username = os.getenv(f"{service_name}_{region}_NAME")
-        password = os.getenv(f"{service_name}_{region}_PASS")
+        if auth_type == AuthType.USERNAME_PASSWORD:
+            username = os.getenv(f"{service_name}_{region}_NAME")
+            password = os.getenv(f"{service_name}_{region}_PASS")
 
-        if not username or not password:
-            self.logger.error(f"Bluesky credentials not set for {self.region.label}")
-            return None
+            if not username or not password:
+                self.logger.error(
+                    f"Bluesky credentials not set for {self.region.label}"
+                )
+                return None
 
-        return username, password
+            return username, password
+        elif auth_type == AuthType.TOKEN:
+            token = os.getenv(f"{service_name}_{region}_TOKEN")
+
+            if not token:
+                self.logger.error(f"Misskey token not set for {self.region.label}")
+                return None
+
+            return (token,)
 
     def get_table_name(self) -> str | None:
         table_name = os.getenv(f"{self.region.label.upper()}_DB")
