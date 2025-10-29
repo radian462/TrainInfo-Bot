@@ -4,10 +4,11 @@ from urllib.parse import urlparse
 
 import requests
 
-from Modules.make_logger import make_logger
+from ..make_logger import make_logger
+from .baseclient import BaseSocialClient, PostResponse
 
 
-class Bluesky:
+class BlueskyClient(BaseSocialClient):
     def __init__(self):
         self.logger = make_logger("Bluesky")
         self.session = requests.Session()
@@ -27,7 +28,7 @@ class Bluesky:
         self.GET_RECORD_ENDPOINT = "com.atproto.repo.getRecord"
         self.CREATE_RECORD_ENDPOINT = "com.atproto.repo.createRecord"
 
-    def login(self, identifier: str, password: str) -> dict:
+    def login(self, identifier: str, password: str) -> bool:
         try:
             url = self.HOST + self.LOGIN_ENDPOINT
 
@@ -45,10 +46,88 @@ class Bluesky:
             self.accessjwt = session_data.get("accessJwt")
             self.refreshjwt = session_data.get("refreshJwt")
 
-            return session_data
+            if all([self.handle, self.did, self.accessjwt, self.refreshjwt]):
+                self.last_refresh = datetime.now(timezone.utc)
+                self.logger.info("Login successful")
+                return True
         except Exception:
             self.logger.error("An error occurred", exc_info=True)
-            return {}
+            return False
+
+    def post(
+        self,
+        text: str,
+        reply_to: dict | None = None,
+        _retry: bool = True,
+    ) -> PostResponse:
+        """
+        Blueskyに投稿
+
+        Parameters
+        ----------
+        text : str
+            投稿内容
+        reply_to : str | None, optional
+            返信先の投稿情報
+        _retry : bool, optional
+            トークン更新後に再試行するかどうか
+
+        Returns
+        -------
+        PostResponse
+            投稿結果
+
+        notes
+        -----
+        401エラーが発生した場合、トークンを更新して再試行する。ただし、再試行は一度だけ行う
+        returnした投稿情報を直接渡せばリプライが可能
+        """
+        try:
+            if not self.accessjwt:
+                self.logger.error("Not logged in")
+                return {}
+
+            self._refresh_token()
+
+            url = self.HOST + self.CREATE_RECORD_ENDPOINT
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {self.accessjwt}",
+            }
+            data: dict[str, Any] = {
+                "repo": self.handle,
+                "collection": "app.bsky.feed.post",
+                "record": {
+                    "$type": "app.bsky.feed.post",
+                    "text": text,
+                    "createdAt": datetime.now(timezone.utc).strftime(
+                        "%Y-%m-%dT%H:%M:%S.%fZ"
+                    ),
+                },
+            }
+
+            if reply_to:
+                data["record"]["reply"] = self._get_reply_refs(reply_to)
+
+            response = self.session.post(url, json=data, headers=headers, timeout=10)
+            response.raise_for_status()
+
+            return PostResponse(
+                success=True, ref=response.json().get("uri"), raw=response.json()
+            )
+
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == 401 and _retry:
+                self.logger.warning(
+                    "Failed to authenticate.token may be expired.\n Refreshing token and retrying..."
+                )
+                self._request_refresh_jwt()
+                return self.post(text, reply_to, _retry=False)
+            else:
+                raise
+        except Exception as e:
+            self.logger.error("An error occurred", exc_info=True)
+            return PostResponse(success=False, error=str(e))
 
     def _request_refresh_jwt(self) -> None:
         try:
@@ -104,7 +183,7 @@ class Bluesky:
             self.logger.error("An error occurred", exc_info=True)
             return {}
 
-    def _get_reply_refs(self, uri: str) -> dict:
+    def _get_reply_refs(self, uri: str) -> dict[str, dict]:
         try:
             url = self.HOST + self.GET_RECORD_ENDPOINT
             uri_parts = self._parse_uri(uri)
@@ -145,74 +224,18 @@ class Bluesky:
             self.logger.error("An error occurred", exc_info=True)
             return {}
 
-    def post(
-        self,
-        text: str,
-        reply_to: dict | None = None,
-        _retry: bool = True,
-    ) -> dict:
-        """
-        Blueskyに投稿
 
-        Parameters
-        ----------
-        text : str
-            投稿内容
-        reply_to : Optional[dict], optional
-            返信先の投稿情報
-        _retry : bool, optional
-            トークン更新後に再試行するかどうか
+if __name__ == "__main__":
+    import os
 
-        Returns
-        -------
-        dict
-            投稿結果
+    from dotenv import load_dotenv
 
-        notes
-        -----
-        401エラーが発生した場合、トークンを更新して再試行する。ただし、再試行は一度だけ行う
-        returnした投稿情報を直接渡せばリプライが可能
-        """
-        try:
-            if not self.accessjwt:
-                self.logger.error("Not logged in")
-                return {}
-
-            self._refresh_token()
-
-            url = self.HOST + self.CREATE_RECORD_ENDPOINT
-            headers = {
-                "Content-Type": "application/json",
-                "Authorization": f"Bearer {self.accessjwt}",
-            }
-            data: dict[str, Any] = {
-                "repo": self.handle,
-                "collection": "app.bsky.feed.post",
-                "record": {
-                    "$type": "app.bsky.feed.post",
-                    "text": text,
-                    "createdAt": datetime.now(timezone.utc).strftime(
-                        "%Y-%m-%dT%H:%M:%S.%fZ"
-                    ),
-                },
-            }
-
-            if reply_to:
-                data["record"]["reply"] = self._get_reply_refs(reply_to["uri"])
-
-            response = self.session.post(url, json=data, headers=headers, timeout=10)
-            response.raise_for_status()
-
-            return response.json()
-        except requests.exceptions.HTTPError as e:
-            if e.response.status_code == 401 and _retry:
-                self.logger.warning(
-                    "Failed to authenticate.token may be expired.\n Refreshing token and retrying..."
-                )
-                self._request_refresh_jwt()
-                return self.post(text, reply_to, _retry=False)
-            else:
-                raise
-        except Exception:
-            self.logger.error("An error occurred", exc_info=True)
-            return {}
+    load_dotenv()
+    client = BlueskyClient()
+    if client.login(os.getenv("BLUESKY_KANTO_NAME"), os.getenv("BLUESKY_KANTO_PASS")):
+        response = client.post("Hello, Bluesky!")
+        if response.success:
+            print(f"Posted successfully! URI: {response.ref}")
+            client.post("This is a reply!", reply_to=response.ref)
+        else:
+            print(f"Failed to post: {response.error}")

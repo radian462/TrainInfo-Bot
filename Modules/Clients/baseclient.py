@@ -6,7 +6,7 @@ from typing import Any
 @dataclass
 class PostResponse:
     success: bool = False
-    ref: str | dict | None = None  # これを直接渡せばリプライできるよう設計する
+    ref: str | None = None  # これを直接渡せばリプライできるよう設計する
     raw: dict[str, Any] | None = None
     error: str | None = None
 

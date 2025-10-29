@@ -6,7 +6,7 @@ from threading import Thread
 
 from dotenv import load_dotenv
 
-from Modules.Clients.bluesky import Bluesky
+from Modules.Clients.bluesky import BlueskyClient
 from Modules.healthcheck import healthcheck
 from Modules.make_logger import make_logger
 from Modules.traininfo.database import get_previous_status, set_latest_status
@@ -49,7 +49,7 @@ class BlueskyManager:
         self.logger = make_logger(Service.BLUESKY.value, context=region.label)
         self.region = region
 
-        self.bluesky = Bluesky()
+        self.bluesky = BlueskyClient()
         try:
             auth = self.get_auth()
             if auth is None:
