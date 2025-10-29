@@ -6,13 +6,13 @@ from threading import Thread
 
 from dotenv import load_dotenv
 
-from Modules.Clients.bluesky import BlueskyClient
-from Modules.Clients.misskeyio import MisskeyIOClient
-from Modules.healthcheck import healthcheck
-from Modules.make_logger import make_logger
-from Modules.traininfo.database import get_previous_status, set_latest_status
-from Modules.traininfo.message import create_message
-from Modules.traininfo.request import TrainStatus, request_from_NHK, request_from_yahoo
+from clients.bluesky import BlueskyClient
+from clients.misskeyio import MisskeyIOClient
+from helpers.healthcheck import healthcheck
+from helpers.make_logger import make_logger
+from traininfo.database import get_previous_status, set_latest_status
+from traininfo.message import create_message
+from traininfo.request import TrainStatus, request_from_NHK, request_from_yahoo
 
 healthcheck()
 load_dotenv()

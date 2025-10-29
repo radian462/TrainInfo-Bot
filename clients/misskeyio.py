@@ -1,7 +1,8 @@
 from misskey import Misskey
 from misskey.exceptions import MisskeyAPIException
 
-from ..make_logger import make_logger
+from helpers.make_logger import make_logger
+
 from .baseclient import BaseSocialClient, PostResponse
 
 

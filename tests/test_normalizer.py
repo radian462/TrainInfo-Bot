@@ -1,4 +1,4 @@
-from Modules.traininfo.normalizer import status_normalizer
+from traininfo.normalizer import status_normalizer
 
 
 def test_known_status():
