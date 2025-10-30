@@ -25,7 +25,7 @@ DEBUG = os.getenv("DEBUG", "False").lower() == "true"
 class RegionalManager:
     def __init__(self, region: Region):
         self.region = region
-        self.logger = make_logger(__class__.__name__, context=region.label.upper())  # type: ignore[name-defined]
+        self.logger = make_logger(type(self).__name__, context=region.label.upper())
         self.clients = [service.client(region.label.upper()) for service in Service]
 
         self.login_all()

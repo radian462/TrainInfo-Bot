@@ -9,7 +9,7 @@ from .baseclient import BaseSocialClient, PostResponse
 
 class MisskeyIOClient(BaseSocialClient):
     def __init__(self, context: str | None = None) -> None:
-        self.logger = make_logger(__class__.__name__, context=context)  # type: ignore[name-defined]
+        self.logger = make_logger(type(self).__name__, context=context)
         super().__init__(
             service_name=Service.MISSKEYIO,
             auth_type=AuthType.TOKEN,

@@ -17,7 +17,7 @@ class BlueskyClient(BaseSocialClient):
             auth_type=AuthType.USERNAME_PASSWORD,
             post_string_limit=300,
         )
-        self.logger = make_logger(__class__.__name__, context=context)  # type: ignore[name-defined]
+        self.logger = make_logger(type(self).__name__, context=context)
         self.session = requests.Session()
         self.session.headers.update({"Connection": "keep-alive"})
 
