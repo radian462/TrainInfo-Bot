@@ -1,14 +1,14 @@
 import os
 import time
 from datetime import datetime
-from enum import Enum
 from threading import Thread
 
 from dotenv import load_dotenv
 
-from clients.baseclient import AuthType, Service
+from clients.baseclient import AuthType
 from clients.bluesky import BlueskyClient
 from clients.misskeyio import MisskeyIOClient
+from enums import Region, Service
 from helpers.healthcheck import healthcheck
 from helpers.make_logger import make_logger
 from traininfo.database import get_previous_status, set_latest_status
@@ -22,23 +22,6 @@ logger = make_logger("main")
 DEBUG = os.getenv("DEBUG", "False").lower() == "true"
 
 
-class Region(Enum):
-    KANTO = ("kanto", 4)
-    KANSAI = ("kansai", 6)
-
-    def __init__(self, name: str, region_id: int):
-        self._name_str = name
-        self._region_id = region_id
-
-    @property
-    def id(self):
-        return self._region_id
-
-    @property
-    def label(self):
-        return self._name_str
-
-
 class RegionalManager:
     def __init__(self, region: Region):
         self.region = region
@@ -49,7 +32,7 @@ class RegionalManager:
 
     def login_all(self) -> bool:
         is_succeed = [
-            client.login(self.get_auth(service, client.auth_type))
+            client.login(*self.get_auth(service, client.auth_type))
             for service, client in zip(Service, self.clients)
         ]
         if all(is_succeed):

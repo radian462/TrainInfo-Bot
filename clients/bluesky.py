@@ -4,9 +4,10 @@ from urllib.parse import urlparse
 
 import requests
 
+from enums import AuthType, Service
 from helpers.make_logger import make_logger
 
-from .baseclient import AuthType, BaseSocialClient, PostResponse, Service
+from .baseclient import BaseSocialClient, PostResponse
 
 
 class BlueskyClient(BaseSocialClient):

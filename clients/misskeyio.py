@@ -1,16 +1,17 @@
 from misskey import Misskey
 from misskey.exceptions import MisskeyAPIException
 
+from enums import AuthType, Service
 from helpers.make_logger import make_logger
 
-from .baseclient import AuthType, BaseSocialClient, PostResponse, Service
+from .baseclient import BaseSocialClient, PostResponse
 
 
 class MisskeyIOClient(BaseSocialClient):
     def __init__(self):
         self.logger = make_logger("MisskeyIO")
         super().__init__(
-            service_name=Service.MISSKEYIO,
+            service_name=Service.MISSKEYIO.label,
             auth_type=AuthType.TOKEN,
             post_string_limit=3000,
         )
