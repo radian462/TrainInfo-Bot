@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any
 
-from enums import AuthType
+from enums import AuthType, Service
 
 
 @dataclass
@@ -16,9 +16,9 @@ class PostResponse:
 class BaseSocialClient(ABC):
     @abstractmethod
     def __init__(
-        self, service_name: str, auth_type: AuthType, post_string_limit: int
+        self, service_name: Service, auth_type: AuthType, post_string_limit: int
     ) -> None:
-        self.service_name: str = service_name
+        self.service_name: str = service_name.label
         self.auth_type: AuthType = auth_type
         self.post_string_limit: int = post_string_limit
 

@@ -11,13 +11,13 @@ from .baseclient import BaseSocialClient, PostResponse
 
 
 class BlueskyClient(BaseSocialClient):
-    def __init__(self):
+    def __init__(self, context: str | None = None) -> None:
         super().__init__(
             service_name=Service.BLUESKY,
             auth_type=AuthType.USERNAME_PASSWORD,
             post_string_limit=300,
         )
-        self.logger = make_logger(Service.BLUESKY.label)
+        self.logger = make_logger(__class__.__name__, context=context)  # type: ignore[name-defined]
         self.session = requests.Session()
         self.session.headers.update({"Connection": "keep-alive"})
 

@@ -8,10 +8,10 @@ from .baseclient import BaseSocialClient, PostResponse
 
 
 class MisskeyIOClient(BaseSocialClient):
-    def __init__(self):
-        self.logger = make_logger("MisskeyIO")
+    def __init__(self, context: str | None = None) -> None:
+        self.logger = make_logger(__class__.__name__, context=context)  # type: ignore[name-defined]
         super().__init__(
-            service_name=Service.MISSKEYIO.label,
+            service_name=Service.MISSKEYIO,
             auth_type=AuthType.TOKEN,
             post_string_limit=3000,
         )
