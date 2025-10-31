@@ -43,7 +43,7 @@ class MisskeyIOClient(BaseSocialClient):
         self,
         text: str,
         reply_to: str | None = None,
-        _retry: bool = True,
+        max_retries: int = 3,
     ) -> PostResponse:
         """
         Misskey.ioに投稿
@@ -54,8 +54,8 @@ class MisskeyIOClient(BaseSocialClient):
             投稿内容
         reply_to : str | None, optional
             返信先の投稿情報
-        _retry : bool, optional
-            再試行するかどうか
+        max_retries : int
+            最大再試行回数
 
         Returns
         -------
@@ -71,13 +71,17 @@ class MisskeyIOClient(BaseSocialClient):
             self.logger.error("Client not logged in")
             return PostResponse(success=False, error="Client not logged in")
 
-        try:
-            result = self.misskey.notes_create(text=text, reply_id=reply_to)
-            return PostResponse(
-                success=True,
-                ref=result.get("createdNote", {}).get("id"),
-                raw=result,
-            )
-        except Exception:
-            self.logger.error("An error occurred", exc_info=True)
-            return PostResponse(success=False, error="An exception occurred")
+        for i in range(max_retries):
+            try:
+                result = self.misskey.notes_create(text=text, reply_id=reply_to)
+                return PostResponse(
+                    success=True,
+                    ref=result.get("createdNote", {}).get("id"),
+                    raw=result,
+                )
+            except Exception:
+                self.logger.error("An error occurred", exc_info=True)
+                if i < max_retries - 1:
+                    self.logger.info(f"Retrying... ({i + 1}/{max_retries})")
+                    continue
+                return PostResponse(success=False, error="An exception occurred")

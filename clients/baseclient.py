@@ -36,7 +36,7 @@ class BaseSocialClient(ABC):
 
     @abstractmethod
     def post(
-        self, text: str, reply_to: str | None = None, _retry: bool = True
+        self, text: str, reply_to: str | None = None, max_retries: int = 3
     ) -> PostResponse:
         """
         投稿を行う
@@ -47,10 +47,8 @@ class BaseSocialClient(ABC):
             投稿内容
         reply_to : str | dict | None, optional
             返信先の投稿情報
-        _retry : bool, optional
-            再試行するかどうか
-        **kwargs
-            その他の投稿オプション
+        max_retries : int, optional
+            投稿失敗時のリトライ回数, by default 3
 
         Returns
         -------
