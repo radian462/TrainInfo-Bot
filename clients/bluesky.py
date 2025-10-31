@@ -47,7 +47,7 @@ class BlueskyClient(BaseSocialClient):
                 url,
                 json={"identifier": identifier, "password": password},
                 headers={"Content-Type": "application/json"},
-                timeout=10,
+                timeout=20,
             )
             response.raise_for_status()
             session_data = response.json()
@@ -120,7 +120,7 @@ class BlueskyClient(BaseSocialClient):
             if reply_to:
                 data["record"]["reply"] = self._get_reply_refs(reply_to)
 
-            response = self.session.post(url, json=data, headers=headers, timeout=10)
+            response = self.session.post(url, json=data, headers=headers, timeout=20)
             response.raise_for_status()
 
             return PostResponse(
@@ -149,7 +149,7 @@ class BlueskyClient(BaseSocialClient):
                     "Content-Type": "application/json",
                     "Authorization": f"Bearer {self.refreshjwt}",
                 },
-                timeout=10,
+                timeout=20,
             )
             response.raise_for_status()
             session_data = response.json()
@@ -199,7 +199,7 @@ class BlueskyClient(BaseSocialClient):
             url = self.HOST + self.GET_RECORD_ENDPOINT
             uri_parts = self._parse_uri(uri)
 
-            r = self.session.get(url, params=uri_parts, timeout=10)
+            r = self.session.get(url, params=uri_parts, timeout=20)
             r.raise_for_status()
             parent = r.json()
 
@@ -214,7 +214,7 @@ class BlueskyClient(BaseSocialClient):
                         "collection": root_collection,
                         "rkey": root_rkey,
                     },
-                    timeout=10,
+                    timeout=20,
                 )
                 r.raise_for_status()
                 root = r.json()

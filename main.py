@@ -85,9 +85,14 @@ class RegionalManager:
             for i, message in enumerate(messages):
                 try:
                     post = client.post(message, post.ref if post and post.ref else None)
-                    self.logger.info(
-                        f"Completed posting to {client.service_name} {i + 1}/{len(messages)}"
-                    )
+                    if post.success:
+                        self.logger.info(
+                            f"Completed posting to {client.service_name} {i + 1}/{len(messages)}"
+                        )
+                    else:
+                        self.logger.warning(
+                            f"Failed to post message to {client.service_name} {i + 1}/{len(messages)}"
+                        )
                 except Exception:
                     self.logger.error("Failed to post message", exc_info=True)
 
@@ -140,8 +145,6 @@ class RegionalManager:
 
         for t in threads:
             t.join()
-
-        self.logger.info(f"All posts completed for {self.region.label}")
 
 
 def main():
