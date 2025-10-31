@@ -1,6 +1,6 @@
 from types import SimpleNamespace
 
-from Modules.traininfo.message import sort_status
+from traininfo.message import sort_status
 
 TrainStatus = SimpleNamespace
 

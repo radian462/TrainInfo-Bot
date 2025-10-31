@@ -12,6 +12,10 @@
 - Bluesky
   - [@train-kanto.bsky.social](https://bsky.app/profile/did:plc:f2nbethp4g7xfdthyv2wipjo)
   - [@train-kansai.bsky.social](https://bsky.app/profile/did:plc:hpioxwkkbmbexev43wjiti4d)
+ 
+- Misskey.io
+  - [@train_kanto](https://misskey.io/@train_kanto)   
+  - [@train_kansai](https://misskey.io/@train_kansai)  
 
 # クレジット
 アイコンは[こちら](https://www.ac-illust.com/main/detail.php?id=1774862&wo)からお借りしました

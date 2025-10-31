@@ -4,13 +4,20 @@ from urllib.parse import urlparse
 
 import requests
 
-from ..make_logger import make_logger
+from enums import AuthType, Service
+from helpers.make_logger import make_logger
+
 from .baseclient import BaseSocialClient, PostResponse
 
 
 class BlueskyClient(BaseSocialClient):
-    def __init__(self):
-        self.logger = make_logger("Bluesky")
+    def __init__(self, context: str | None = None) -> None:
+        super().__init__(
+            service_name=Service.BLUESKY,
+            auth_type=AuthType.USERNAME_PASSWORD,
+            post_string_limit=300,
+        )
+        self.logger = make_logger(type(self).__name__, context=context)
         self.session = requests.Session()
         self.session.headers.update({"Connection": "keep-alive"})
 
@@ -40,7 +47,7 @@ class BlueskyClient(BaseSocialClient):
                 url,
                 json={"identifier": identifier, "password": password},
                 headers={"Content-Type": "application/json"},
-                timeout=10,
+                timeout=20,
             )
             response.raise_for_status()
             session_data = response.json()
@@ -59,10 +66,7 @@ class BlueskyClient(BaseSocialClient):
         return False
 
     def post(
-        self,
-        text: str,
-        reply_to: str | None = None,
-        _retry: bool = True,
+        self, text: str, reply_to: str | None = None, max_retries: int = 3
     ) -> PostResponse:
         """
         Blueskyに投稿
@@ -73,8 +77,8 @@ class BlueskyClient(BaseSocialClient):
             投稿内容
         reply_to : str | None, optional
             返信先の投稿情報
-        _retry : bool, optional
-            トークン更新後に再試行するかどうか
+        max_retries : int
+            投稿失敗時のリトライ回数, by default 3
 
         Returns
         -------
@@ -86,52 +90,61 @@ class BlueskyClient(BaseSocialClient):
         401エラーが発生した場合、トークンを更新して再試行する。ただし、再試行は一度だけ行う
         returnした投稿情報を直接渡せばリプライが可能
         """
-        try:
-            if not self.accessjwt:
-                self.logger.error("Not logged in")
-                return PostResponse(success=False, error="Not logged in")
+        for i in range(max_retries):
+            try:
+                if not self.accessjwt:
+                    self.logger.error("Not logged in")
+                    return PostResponse(success=False, error="Not logged in")
 
-            self._refresh_token()
+                self._refresh_token()
 
-            url = self.HOST + self.CREATE_RECORD_ENDPOINT
-            headers = {
-                "Content-Type": "application/json",
-                "Authorization": f"Bearer {self.accessjwt}",
-            }
-            data: dict[str, Any] = {
-                "repo": self.handle,
-                "collection": "app.bsky.feed.post",
-                "record": {
-                    "$type": "app.bsky.feed.post",
-                    "text": text,
-                    "createdAt": datetime.now(timezone.utc).strftime(
-                        "%Y-%m-%dT%H:%M:%S.%fZ"
-                    ),
-                },
-            }
+                url = self.HOST + self.CREATE_RECORD_ENDPOINT
+                headers = {
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {self.accessjwt}",
+                }
+                data: dict[str, Any] = {
+                    "repo": self.handle,
+                    "collection": "app.bsky.feed.post",
+                    "record": {
+                        "$type": "app.bsky.feed.post",
+                        "text": text,
+                        "createdAt": datetime.now(timezone.utc).strftime(
+                            "%Y-%m-%dT%H:%M:%S.%fZ"
+                        ),
+                    },
+                }
 
-            if reply_to:
-                data["record"]["reply"] = self._get_reply_refs(reply_to)
+                if reply_to:
+                    data["record"]["reply"] = self._get_reply_refs(reply_to)
 
-            response = self.session.post(url, json=data, headers=headers, timeout=10)
-            response.raise_for_status()
-
-            return PostResponse(
-                success=True, ref=response.json().get("uri"), raw=response.json()
-            )
-
-        except requests.exceptions.HTTPError as e:
-            if e.response.status_code == 401 and _retry:
-                self.logger.warning(
-                    "Failed to authenticate.token may be expired.\n Refreshing token and retrying..."
+                response = self.session.post(
+                    url, json=data, headers=headers, timeout=20
                 )
-                self._request_refresh_jwt()
-                return self.post(text, reply_to, _retry=False)
-            else:
-                raise
-        except Exception as e:
-            self.logger.error("An error occurred", exc_info=True)
-            return PostResponse(success=False, error=str(e))
+                response.raise_for_status()
+
+                return PostResponse(
+                    success=True, ref=response.json().get("uri"), raw=response.json()
+                )
+
+            except requests.exceptions.HTTPError as e:
+                if e.response.status_code == 401:
+                    self.logger.warning(
+                        "Failed to authenticate.token may be expired.\n Refreshing token and retrying..."
+                    )
+                    self._request_refresh_jwt()
+
+                if i < max_retries - 1:
+                    self.logger.info(f"Retrying... ({i + 1}/{max_retries})")
+                    continue
+                return PostResponse(success=False, error=str(e))
+            except Exception as e:
+                self.logger.error("An error occurred", exc_info=True)
+
+                if i < max_retries - 1:
+                    self.logger.info(f"Retrying... ({i + 1}/{max_retries})")
+                    continue
+                return PostResponse(success=False, error=str(e))
 
     def _request_refresh_jwt(self) -> None:
         try:
@@ -142,7 +155,7 @@ class BlueskyClient(BaseSocialClient):
                     "Content-Type": "application/json",
                     "Authorization": f"Bearer {self.refreshjwt}",
                 },
-                timeout=10,
+                timeout=20,
             )
             response.raise_for_status()
             session_data = response.json()
@@ -192,7 +205,7 @@ class BlueskyClient(BaseSocialClient):
             url = self.HOST + self.GET_RECORD_ENDPOINT
             uri_parts = self._parse_uri(uri)
 
-            r = self.session.get(url, params=uri_parts, timeout=10)
+            r = self.session.get(url, params=uri_parts, timeout=20)
             r.raise_for_status()
             parent = r.json()
 
@@ -207,7 +220,7 @@ class BlueskyClient(BaseSocialClient):
                         "collection": root_collection,
                         "rkey": root_rkey,
                     },
-                    timeout=10,
+                    timeout=20,
                 )
                 r.raise_for_status()
                 root = r.json()

@@ -40,7 +40,8 @@ combine-as-imports = true
 module = [
     "bottle.*",
     "requests.*",
-    "redis.*"
+    "redis.*",
+    "misskey.*"
 ]
 ignore_missing_imports = true
 

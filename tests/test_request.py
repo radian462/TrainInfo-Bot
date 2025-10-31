@@ -2,7 +2,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from Modules.traininfo.request import TrainStatus, request_from_NHK, request_from_yahoo
+from traininfo.request import TrainStatus, request_from_NHK, request_from_yahoo
 
 
 @pytest.fixture
@@ -58,7 +58,7 @@ def sample_yahoo_html():
     """
 
 
-@patch("Modules.traininfo.request.session.get")
+@patch("traininfo.request.session.get")
 def test_request_from_NHK(mock_get, sample_nhk_response):
     mock_response = Mock()
     mock_response.json.return_value = sample_nhk_response
@@ -72,7 +72,7 @@ def test_request_from_NHK(mock_get, sample_nhk_response):
     assert result[0].train == "山手線"
 
 
-@patch("Modules.traininfo.request.session.get")
+@patch("traininfo.request.session.get")
 def test_request_from_yahoo(mock_get, sample_yahoo_html):
     mock_response = Mock()
     mock_response.content = sample_yahoo_html.encode("utf-8")
@@ -86,7 +86,7 @@ def test_request_from_yahoo(mock_get, sample_yahoo_html):
     assert result[0].status == "🕒列車遅延"
 
 
-@patch("Modules.traininfo.request.session.get")
+@patch("traininfo.request.session.get")
 def test_request_from_yahoo_no_next_data(mock_get):
     mock_response = Mock()
     mock_response.content = "<html><body>No script tag</body></html>".encode("utf-8")
