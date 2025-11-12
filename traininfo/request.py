@@ -60,7 +60,7 @@ class TrainInfoClient:
         for i in range(retry_times):
             try:
                 r = self.session.get(
-                    self.NHK_ENDPOINT % self.region.value,
+                    self.NHK_ENDPOINT % self.region.id,
                     timeout=self.timeout,
                 )
 
@@ -78,7 +78,7 @@ class TrainInfoClient:
                 )
             except Exception as e:
                 self.logger.error(f"Error requesting from NHK: {e}")
-                if i < retry_times - 1:
+                if i >= retry_times - 1:
                     self.logger.info(f"Retrying... ({i + 1}/{retry_times})")
                     return tuple()
 
@@ -107,18 +107,24 @@ class TrainInfoClient:
                 r = r.json()
                 features = r.get("feature", [])
 
-                return tuple(
-                    TrainStatus(
-                        train=route_info.get("displayName", ""),
-                        status=status_normalizer(diainfo.get("status", "")),
-                        detail=diainfo.get("message", ""),
-                    )
-                    for feature in features
-                    if (route_info := feature.get("routeInfo", {}))
-                    if (diainfo := route_info.get("diainfo", {}))
-                )
+                train_statuses = []
+                for feature in features:
+                    routeinfo = feature.get("routeInfo", {})
+                    property_data = routeinfo.get("property", {})
+                    diainfo_list = property_data.get("diainfo", [])
+
+                    for diainfo in diainfo_list:
+                        train_statuses.append(
+                            TrainStatus(
+                                train=property_data.get("displayName", ""),
+                                status=status_normalizer(diainfo.get("status", "")),
+                                detail=diainfo.get("message", ""),
+                            )
+                        )
+
+                return tuple(train_statuses)
             except Exception as e:
                 self.logger.error(f"Error requesting from Yahoo: {e}")
-                if i < retry_times - 1:
+                if i >= retry_times - 1:
                     self.logger.info(f"Retrying... ({i + 1}/{retry_times})")
                     return tuple()
