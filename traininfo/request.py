@@ -59,15 +59,15 @@ class TrainInfoClient:
     def _request_from_NHK(self, retry_times: int = 3) -> tuple[TrainStatus]:
         for i in range(retry_times):
             try:
-                response = self.session.get(
+                r = self.session.get(
                     self.NHK_ENDPOINT % self.region.value,
                     timeout=self.timeout,
                 )
 
-                response.raise_for_status()
-                original_data = response.json().get("channel", {}).get(
-                    "item"
-                ) + response.json().get("channel", {}).get("itemLong")
+                r.raise_for_status()
+                original_data = r.json().get("channel", {}).get("item") + r.json().get(
+                    "channel", {}
+                ).get("itemLong")
                 return tuple(
                     TrainStatus(
                         train=o.get("trainLine", ""),
@@ -83,4 +83,42 @@ class TrainInfoClient:
                     return tuple()
 
     def _request_from_yahoo(self, retry_times: int = 3) -> tuple[TrainStatus]:
-        pass
+        for i in range(retry_times):
+            try:
+                params = {
+                    "area": self.region.id,
+                    "detail": "full",
+                    "diainfo": "true",
+                    "sortColumn": "publishTime",
+                }
+
+                headers = {
+                    "User-Agent": f"; Yahoo AppID:{self.yahoo_app_id}",
+                    "Accept-Language": "ja-JP",
+                }
+
+                r = self.session.get(
+                    self.YAHOO_ENDPOINT,
+                    params=params,
+                    headers=headers,
+                )
+
+                r.raise_for_status()
+                r = r.json()
+                features = r.get("feature", [])
+
+                return tuple(
+                    TrainStatus(
+                        train=route_info.get("displayName", ""),
+                        status=status_normalizer(diainfo.get("status", "")),
+                        detail=diainfo.get("message", ""),
+                    )
+                    for feature in features
+                    if (route_info := feature.get("routeInfo", {}))
+                    if (diainfo := route_info.get("diainfo", {}))
+                )
+            except Exception as e:
+                self.logger.error(f"Error requesting from Yahoo: {e}")
+                if i < retry_times - 1:
+                    self.logger.info(f"Retrying... ({i + 1}/{retry_times})")
+                    return tuple()
