@@ -1,5 +1,6 @@
 import time
 from dataclasses import dataclass
+from json import JSONDecodeError
 
 import requests
 
@@ -80,12 +81,41 @@ class TrainInfoClient:
                     for o in original_data
                     if isinstance(o, dict)
                 )
+            except JSONDecodeError as e:
+                self.logger.error(f"JSON decode error from NHK. no retry: {e}")
+                break
+            except requests.Timeout as e:
+                self.logger.warning(f"Request to NHK timed out: {e}")
+            except requests.RequestException as e:
+                if hasattr(e, "response") and e.response is not None:
+                    status = e.response.status_code
+                    if status == 429:
+                        retry_after = e.response.headers.get("Retry-After")
+                        if retry_after and retry_after.isdigit():
+                            delay = float(retry_after)
+                        else:
+                            delay = 2**i
+                        self.logger.warning(f"Rate limited. Retrying after {delay}s...")
+                        time.sleep(delay)
+                        continue
+                    elif status >= 500:
+                        self.logger.warning(
+                            f"Server error ({status}). retrying... ({i + 1}/{retry_times}): {e}"
+                        )
+                    else:
+                        self.logger.error(
+                            f"Client error occurred while requesting NHK: {e}"
+                        )
+                        break
             except Exception as e:
                 self.logger.error(f"Error requesting from NHK: {e}")
-                if i < retry_times - 1:
-                    self.logger.info(f"Retrying... ({i + 1}/{retry_times})")
-                    time.sleep(self.retry_sleep)
-                return ()
+
+            if i < retry_times - 1:
+                self.logger.info(f"Retrying... ({i + 1}/{retry_times})")
+                time.sleep(self.retry_sleep)
+                continue
+
+        return ()
 
     def _request_from_yahoo(self, retry_times: int = 3) -> tuple[TrainStatus]:
         if not self.yahoo_app_id:
@@ -132,9 +162,44 @@ class TrainInfoClient:
                         )
 
                 return tuple(train_statuses)
+            except JSONDecodeError as e:
+                self.logger.error(f"JSON decode error from Yahoo. no retry: {e}")
+                break
+            except requests.Timeout as e:
+                self.logger.warning(f"Request to Yahoo timed out: {e}")
+            except requests.RequestException as e:
+                if hasattr(e, "response") and e.response is not None:
+                    status = e.response.status_code
+
+                    if status == 403:
+                        self.logger.error(
+                            "Access forbidden. no retry. This may be due to an invalid APPID or because the access is originating from the EEA or the UK."
+                        )
+                        break
+                    elif status == 429:
+                        retry_after = e.response.headers.get("Retry-After")
+                        if retry_after and retry_after.isdigit():
+                            delay = float(retry_after)
+                        else:
+                            delay = 2**i
+                        self.logger.warning(f"Rate limited. Retrying after {delay}s...")
+                        time.sleep(delay)
+                        continue
+                    elif status >= 500:
+                        self.logger.warning(
+                            f"Server error ({status}). retrying... ({i + 1}/{retry_times}): {e}"
+                        )
+                    else:
+                        self.logger.error(
+                            f"Client error occurred while requesting Yahoo: {e}"
+                        )
+                        break
             except Exception as e:
                 self.logger.error(f"Error requesting from Yahoo: {e}")
-                if i < retry_times - 1:
-                    self.logger.info(f"Retrying... ({i + 1}/{retry_times})")
-                    time.sleep(self.retry_sleep)
-                return ()
+
+            if i < retry_times - 1:
+                self.logger.info(f"Retrying... ({i + 1}/{retry_times})")
+                time.sleep(self.retry_sleep)
+                continue
+
+        return ()
