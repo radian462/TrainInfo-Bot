@@ -1,3 +1,4 @@
+import time
 from dataclasses import dataclass
 
 import requests
@@ -21,11 +22,13 @@ class TrainInfoClient:
         region: Region,
         proxy: dict[str, str] | None,
         timeout: int = 10,
+        retry_sleep: float = 1.0,
         yahoo_app_id: str | None = None,
     ) -> None:
         self.region = region
         self.proxy = proxy
         self.timeout = timeout
+        self.retry_sleep = retry_sleep
 
         self.logger = make_logger(type(self).__name__, context=region.label.upper())
         self.session = requests.Session()
@@ -52,7 +55,7 @@ class TrainInfoClient:
 
             if not result:
                 self.logger.error("No data received from all sources.")
-                return tuple()
+                return ()
 
         return result
 
@@ -65,9 +68,9 @@ class TrainInfoClient:
                 )
 
                 r.raise_for_status()
-                original_data = r.json().get("channel", {}).get("item") + r.json().get(
-                    "channel", {}
-                ).get("itemLong")
+                original_data = r.json().get("channel", {}).get(
+                    "item", []
+                ) + r.json().get("channel", {}).get("itemLong", [])
                 return tuple(
                     TrainStatus(
                         train=o.get("trainLine", ""),
@@ -75,14 +78,20 @@ class TrainInfoClient:
                         detail=o.get("textLong", ""),
                     )
                     for o in original_data
+                    if isinstance(o, dict)
                 )
             except Exception as e:
                 self.logger.error(f"Error requesting from NHK: {e}")
-                if i >= retry_times - 1:
+                if i < retry_times - 1:
                     self.logger.info(f"Retrying... ({i + 1}/{retry_times})")
-                    return tuple()
+                    time.sleep(self.retry_sleep)
+                return ()
 
     def _request_from_yahoo(self, retry_times: int = 3) -> tuple[TrainStatus]:
+        if not self.yahoo_app_id:
+            self.logger.error("Yahoo APP ID is not set.")
+            return ()
+
         for i in range(retry_times):
             try:
                 params = {
@@ -125,6 +134,7 @@ class TrainInfoClient:
                 return tuple(train_statuses)
             except Exception as e:
                 self.logger.error(f"Error requesting from Yahoo: {e}")
-                if i >= retry_times - 1:
+                if i < retry_times - 1:
                     self.logger.info(f"Retrying... ({i + 1}/{retry_times})")
-                    return tuple()
+                    time.sleep(self.retry_sleep)
+                return ()
