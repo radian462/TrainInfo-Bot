@@ -74,7 +74,7 @@ class TrainInfoClient:
             result = client.request()
             if not result:
                 self.logger.warning(
-                    f"No data retrieved from source: {type(client.client).__name__}"
+                    f"No data retrieved from source: {type(client).__name__}"
                 )
                 continue
 
