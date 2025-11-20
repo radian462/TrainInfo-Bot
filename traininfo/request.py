@@ -13,7 +13,7 @@ from .trainstatus import TrainStatus
 
 class ClientsInfo(NamedTuple):
     client: BaseTrainInfoClient
-    priority: int
+    priority: int  # これは小さい順に処理されます。
 
 
 class TrainInfoClient:

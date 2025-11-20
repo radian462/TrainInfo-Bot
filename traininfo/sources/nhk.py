@@ -34,7 +34,8 @@ class NHKClient(BaseTrainInfoClient):
         )
         r.raise_for_status()
 
-        original_data = r.json().get("channel", {}).get("item", []) + r.json().get(
+        data = r.json()
+        original_data = data.get("channel", {}).get("item", []) + data.get(
             "channel", {}
         ).get("itemLong", [])
 

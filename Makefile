@@ -3,3 +3,6 @@ fmt:
 
 lint:
 	uv run ruff check
+
+mypy:
+	uv run mypy .

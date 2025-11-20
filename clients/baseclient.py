@@ -14,7 +14,6 @@ class PostResponse:
 
 
 class BaseSocialClient(ABC):
-    @abstractmethod
     def __init__(
         self, service_name: Service, auth_type: AuthType, post_string_limit: int
     ) -> None:
