@@ -20,7 +20,7 @@ class TrainInfoClient:
     def __init__(
         self,
         region: Region,
-        proxy: dict[str, str] | None,
+        proxy: dict[str, str] | None = None,
         timeout: int = 10,
         retry_sleep: float = 1.0,
         yahoo_app_id: str | None = None,

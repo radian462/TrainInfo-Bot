@@ -13,7 +13,8 @@ from helpers.healthcheck import healthcheck
 from helpers.make_logger import make_logger
 from traininfo.database import get_previous_status, set_latest_status
 from traininfo.message import create_message
-from traininfo.request import TrainStatus, request_from_NHK, request_from_yahoo
+from traininfo.request import TrainInfoClient
+from traininfo.trainstatus import TrainStatus
 
 healthcheck()
 load_dotenv()
@@ -25,6 +26,9 @@ DEBUG = os.getenv("DEBUG", "False").lower() == "true"
 class RegionalManager:
     def __init__(self, region: Region):
         self.region = region
+        self.traininfo_client = TrainInfoClient(
+            region, yahoo_app_id=os.getenv("YAHOO_APP_ID")
+        )
         self.logger = make_logger(type(self).__name__, context=region.label.upper())
         self.clients = [service.client(region.label.upper()) for service in Service]
 
@@ -96,22 +100,7 @@ class RegionalManager:
                 except Exception:
                     self.logger.error("Failed to post message", exc_info=True)
 
-        try:
-            data = request_from_NHK(self.region.id)
-            if data is None:
-                self.logger.warning("No data from NHK, trying Yahoo...")
-                data = request_from_yahoo(self.region.id)
-                if data is not None:
-                    self.logger.info("Data received from Yahoo")
-                else:
-                    self.logger.error("No data received from both NHK and Yahoo")
-                    return
-            else:
-                self.logger.info("Data received from NHK")
-        except Exception:
-            self.logger.error("Failed to get data", exc_info=True)
-            return
-
+        data = self.traininfo_client.request()
         table_name = self.get_table_name()
 
         try:
