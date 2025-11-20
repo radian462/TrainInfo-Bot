@@ -77,6 +77,10 @@ class TrainInfoClient:
                     f"No data retrieved from source: {type(client).__name__}"
                 )
                 continue
+            else:
+                self.logger.info(
+                    f"Succeeded in fetching data from {type(client).__name__}"
+                )
 
             return result
 
