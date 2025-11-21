@@ -53,6 +53,9 @@ class YahooClient(BaseTrainInfoClient):
         )
 
         r.raise_for_status()
+        return self._parse(r)
+
+    def _parse(self, r: requests.Response) -> tuple[TrainStatus, ...]:
         r = r.json()
         features = r.get("feature", [])
         train_statuses = []

@@ -30,6 +30,10 @@ class BaseTrainInfoClient(ABC):
     def _fetch(self) -> tuple[TrainStatus, ...]:
         pass
 
+    @abstractmethod
+    def _parse(self, r: requests.Response) -> tuple[TrainStatus, ...]:
+        pass
+
     def request(self) -> tuple[TrainStatus, ...]:
         for i in range(self.retry_times):
             try:

@@ -34,6 +34,9 @@ class NHKClient(BaseTrainInfoClient):
         )
         r.raise_for_status()
 
+        return self._parse(r)
+
+    def _parse(self, r: requests.Response) -> tuple[TrainStatus, ...]:
         data = r.json()
         original_data = data.get("channel", {}).get("item", []) + data.get(
             "channel", {}
