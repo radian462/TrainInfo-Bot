@@ -32,12 +32,13 @@ class MisskeyIOClient(BaseSocialClient):
 
             if meta:
                 self.logger.info("Login successful")
-                return True
+            return bool(meta)
         except MisskeyAPIException as e:
             self.logger.error(f"Misskey API Error: {e.message}", exc_info=True)
+            return False
         except Exception:
             self.logger.error("An error occurred", exc_info=True)
-        return False
+            return False
 
     def post(
         self,
@@ -84,4 +85,5 @@ class MisskeyIOClient(BaseSocialClient):
                 if i < max_retries - 1:
                     self.logger.info(f"Retrying... ({i + 1}/{max_retries})")
                     continue
-                return PostResponse(success=False, error="An exception occurred")
+
+        return PostResponse(success=False, error="An exception occurred")

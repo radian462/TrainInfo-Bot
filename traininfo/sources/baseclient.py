@@ -69,7 +69,7 @@ class BaseTrainInfoClient(ABC):
         return ()
 
     def _status_exception_handler(
-        self, status: int, e: Exception, i: int
+        self, status: int, e: requests.RequestException, i: int
     ) -> tuple[bool, float | None]:
         match status:
             case 429:

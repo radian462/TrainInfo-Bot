@@ -57,13 +57,14 @@ class BlueskyClient(BaseSocialClient):
             self.accessjwt = session_data.get("accessJwt")
             self.refreshjwt = session_data.get("refreshJwt")
 
-            if all([self.handle, self.did, self.accessjwt, self.refreshjwt]):
+            success = all([self.handle, self.did, self.accessjwt, self.refreshjwt])
+            if success:
                 self.last_refresh = datetime.now(timezone.utc)
                 self.logger.info("Login successful")
-                return True
+            return success
         except Exception:
             self.logger.error("An error occurred", exc_info=True)
-        return False
+            return False
 
     def post(
         self, text: str, reply_to: str | None = None, max_retries: int = 3
@@ -145,6 +146,8 @@ class BlueskyClient(BaseSocialClient):
                     self.logger.info(f"Retrying... ({i + 1}/{max_retries})")
                     continue
                 return PostResponse(success=False, error=str(e))
+
+        return PostResponse(success=False, error="All retries failed")
 
     def _request_refresh_jwt(self) -> None:
         try:
