@@ -5,7 +5,7 @@ from json import JSONDecodeError
 import requests
 
 from enums import Region
-from helpers.make_logger import make_logger
+from utils.make_logger import make_logger
 
 from ..trainstatus import TrainStatus
 

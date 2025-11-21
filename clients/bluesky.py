@@ -5,7 +5,7 @@ from urllib.parse import urlparse
 import requests
 
 from enums import AuthType, Service
-from helpers.make_logger import make_logger
+from utils.make_logger import make_logger
 
 from .baseclient import BaseSocialClient, PostResponse
 

@@ -5,7 +5,7 @@ from dataclasses import asdict
 from dotenv import load_dotenv
 from redis import Redis
 
-from helpers.make_logger import make_logger
+from utils.make_logger import make_logger
 
 from .request import TrainStatus
 

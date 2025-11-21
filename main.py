@@ -9,12 +9,12 @@ from clients.baseclient import AuthType
 from clients.bluesky import BlueskyClient
 from clients.misskeyio import MisskeyIOClient
 from enums import Region, Service
-from helpers.healthcheck import healthcheck
-from helpers.make_logger import make_logger
 from traininfo.database import get_previous_status, set_latest_status
 from traininfo.message import create_message
 from traininfo.request import TrainInfoClient
 from traininfo.trainstatus import TrainStatus
+from utils.healthcheck import healthcheck
+from utils.make_logger import make_logger
 
 healthcheck()
 load_dotenv()

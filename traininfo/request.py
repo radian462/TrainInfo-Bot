@@ -3,7 +3,7 @@ from typing import NamedTuple
 import requests
 
 from enums import Region
-from helpers.make_logger import make_logger
+from utils.make_logger import make_logger
 
 from .sources.baseclient import BaseTrainInfoClient
 from .sources.nhk import NHKClient

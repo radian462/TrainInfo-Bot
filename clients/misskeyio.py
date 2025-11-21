@@ -2,7 +2,7 @@ from misskey import Misskey
 from misskey.exceptions import MisskeyAPIException
 
 from enums import AuthType, Service
-from helpers.make_logger import make_logger
+from utils.make_logger import make_logger
 
 from .baseclient import BaseSocialClient, PostResponse
 
