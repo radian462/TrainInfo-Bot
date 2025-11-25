@@ -100,7 +100,11 @@ class RegionalManager:
                 except Exception:
                     self.logger.error("Failed to post message", exc_info=True)
 
-        data = self.traininfo_client.request()
+        result = self.traininfo_client.request()
+        if not result.data and result.is_success:
+            self.logger.info("No data retrieved from TrainInfoClient")
+            return
+        data = result.data if result.data else tuple()
         table_name = self.get_table_name()
 
         try:

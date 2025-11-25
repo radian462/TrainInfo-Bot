@@ -1,7 +1,7 @@
 from utils.make_logger import make_logger
 
 from .normalizer import STATUS_EMOJI, status_normalizer
-from .request import TrainStatus
+from .trainstatus import TrainStatus
 
 logger = make_logger("message")
 
