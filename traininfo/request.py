@@ -1,17 +1,17 @@
-from typing import NamedTuple
+from dataclasses import dataclass
 
 import requests
 
 from enums import Region
 from utils.make_logger import make_logger
 
-from .sources.baseclient import BaseTrainInfoClient
+from .sources.baseclient import BaseTrainInfoClient, TrainInfoResponse
 from .sources.nhk import NHKClient
 from .sources.yahoo import YahooClient
-from .trainstatus import TrainStatus
 
 
-class ClientsInfo(NamedTuple):
+@dataclass
+class ClientsInfo:
     client: BaseTrainInfoClient
     priority: int  # これは小さい順に処理されます。
 
@@ -67,12 +67,12 @@ class TrainInfoClient:
                 )
             )
 
-    def request(self) -> tuple[TrainStatus, ...]:
+    def request(self) -> TrainInfoResponse:
         sorted_clients = sorted(self.clients, key=lambda x: x.priority)
         for client_info in sorted_clients:
             client = client_info.client
             result = client.request()
-            if not result:
+            if not result.is_success:
                 self.logger.warning(
                     f"No data retrieved from source: {type(client).__name__}"
                 )
@@ -85,4 +85,8 @@ class TrainInfoClient:
             return result
 
         self.logger.error("All sources failed to retrieve data.")
-        return ()
+        return TrainInfoResponse(
+            is_success=False,
+            data=None,
+            error="All sources failed to retrieve data.",
+        )

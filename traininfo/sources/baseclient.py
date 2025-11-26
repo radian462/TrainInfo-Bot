@@ -1,5 +1,6 @@
 import time
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from json import JSONDecodeError
 
 import requests
@@ -8,6 +9,13 @@ from enums import Region
 from utils.make_logger import make_logger
 
 from ..trainstatus import TrainStatus
+
+
+@dataclass
+class TrainInfoResponse:
+    is_success: bool
+    data: tuple[TrainStatus, ...] | None
+    error: str | None = None
 
 
 class BaseTrainInfoClient(ABC):
@@ -31,13 +39,17 @@ class BaseTrainInfoClient(ABC):
         pass
 
     @abstractmethod
-    def _parse(self, r: requests.Response) -> tuple[TrainStatus, ...]:
+    def _parse(self, r: requests.Response) -> TrainInfoResponse:
         pass
 
-    def request(self) -> tuple[TrainStatus, ...]:
+    def request(self) -> TrainInfoResponse:
         for i in range(self.retry_times):
             try:
-                return self._fetch()
+                return TrainInfoResponse(
+                    is_success=True,
+                    data=self._fetch(),
+                    error=None,
+                )
             except JSONDecodeError as e:
                 self.logger.error(f"JSON decode error. no retry: {e}")
                 break
@@ -66,7 +78,11 @@ class BaseTrainInfoClient(ABC):
                 time.sleep(self.retry_sleep)
                 continue
 
-        return ()
+        return TrainInfoResponse(
+            is_success=False,
+            data=None,
+            error="Failed to retrieve data after retries.",
+        )
 
     def _status_exception_handler(
         self, status: int, e: requests.RequestException, i: int

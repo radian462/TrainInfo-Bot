@@ -7,7 +7,7 @@ from redis import Redis
 
 from utils.make_logger import make_logger
 
-from .request import TrainStatus
+from .trainstatus import TrainStatus
 
 load_dotenv()
 logger = make_logger("database")
