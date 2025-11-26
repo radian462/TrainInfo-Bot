@@ -3,7 +3,7 @@ import time
 from datetime import datetime
 from threading import Thread
 
-from dotenv import load_dotenv
+import dotenv
 
 from clients.baseclient import AuthType
 from clients.bluesky import BlueskyClient
@@ -13,11 +13,9 @@ from traininfo.database import get_previous_status, set_latest_status
 from traininfo.message import create_message
 from traininfo.request import TrainInfoClient
 from traininfo.trainstatus import TrainStatus
-from utils.healthcheck import healthcheck
 from utils.make_logger import clear_log_file, make_logger
+from utils.server.run import server_run
 
-healthcheck()
-load_dotenv()
 logger = make_logger("main")
 
 DEBUG = os.getenv("DEBUG", "False").lower() == "true"
@@ -165,4 +163,6 @@ def main():
 
 if __name__ == "__main__":
     clear_log_file()
+    server_run()
+    dotenv.load_dotenv()
     main()
