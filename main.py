@@ -14,7 +14,7 @@ from traininfo.message import create_message
 from traininfo.request import TrainInfoClient
 from traininfo.trainstatus import TrainStatus
 from utils.healthcheck import healthcheck
-from utils.make_logger import make_logger
+from utils.make_logger import clear_log_file, make_logger
 
 healthcheck()
 load_dotenv()
@@ -164,4 +164,5 @@ def main():
 
 
 if __name__ == "__main__":
+    clear_log_file()
     main()

@@ -3,7 +3,7 @@ from logging import DEBUG, FileHandler, Formatter, getLogger
 
 from rich.logging import RichHandler
 
-PROJECT_ROOT = os.path.dirname(os.path.abspath(os.path.join(__file__, "..", "..")))
+PROJECT_ROOT = os.path.dirname(os.path.abspath(os.path.join(__file__, "..")))
 LOG_DIR = os.path.join(PROJECT_ROOT, "logs")
 LOG_FILE_PATH = os.path.join(LOG_DIR, "output.log")
 
