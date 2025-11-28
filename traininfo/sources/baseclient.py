@@ -36,13 +36,42 @@ class BaseTrainInfoClient(ABC):
 
     @abstractmethod
     def _fetch(self) -> tuple[TrainStatus, ...]:
+        """
+        データを取得する。self.requestでラップするため、エラーハンドリングは不要。
+
+        Returns
+        -------
+        tuple[TrainStatus, ...]
+            取得したデータのタプル
+        """
         pass
 
     @abstractmethod
     def _parse(self, r: requests.Response) -> TrainInfoResponse:
+        """
+        レスポンスを解析してTrainInfoResponseを返す。
+
+        Parameters
+        ----------
+        r : requests.Response
+            取得したレスポンス
+        Returns
+        -------
+        TrainInfoResponse
+            解析結果
+        """
         pass
 
     def request(self) -> TrainInfoResponse:
+        """
+        データを取得する。エラーハンドリングを行い、TrainInfoResponseを返す。
+        基本的に継承するだけでよい。変更が必要な場合はサブクラスでオーバーライド。
+
+        Returns
+        -------
+        TrainInfoResponse
+            取得結果
+        """
         for i in range(self.retry_times):
             try:
                 return TrainInfoResponse(
@@ -87,6 +116,24 @@ class BaseTrainInfoClient(ABC):
     def _status_exception_handler(
         self, status: int, e: requests.RequestException, i: int
     ) -> tuple[bool, float | None]:
+        """
+        ステータスコードに応じた例外処理を行う。
+        基本的には継承するだけでよい。変更が必要な場合はサブクラスでオーバーライド。
+
+        Parameters
+        ----------
+        status : int
+            ステータスコード
+        e : requests.RequestException
+            発生した例外
+        i : int
+            現在のリトライ回数
+
+        Returns
+        -------
+        tuple[bool, float | None]
+            リトライ可否、リトライまでの遅延時間
+        """
         match status:
             case 429:
                 retry_after = e.response.headers.get("Retry-After")
