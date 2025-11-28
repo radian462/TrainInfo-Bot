@@ -1,36 +1,39 @@
 import json
 import os
 from dataclasses import asdict
+from functools import lru_cache
 
-from dotenv import load_dotenv
 from redis import Redis
 
 from utils.make_logger import make_logger
 
 from .trainstatus import TrainStatus
 
-load_dotenv()
-logger = make_logger("database")
+logger = make_logger(__name__)
 
-r: Redis | None = None
-upstash_host = os.getenv("UPSTASH_HOST")
-upstash_port = os.getenv("UPSTASH_PORT")
-upstash_pass = os.getenv("UPSTASH_PASS")
 
-if upstash_host and upstash_port and upstash_pass:
-    r = Redis(
-        host=upstash_host,
-        port=int(upstash_port),
-        password=upstash_pass,
-        ssl=True,
-        decode_responses=True,
-    )
+def get_redis_client() -> Redis | None:
+    @lru_cache(maxsize=1)
+    def _create_client() -> Redis | None:
+        REDIS_HOST = os.getenv("UPSTASH_HOST")
+        REDIS_PORT = os.getenv("UPSTASH_PORT")
+        REDIS_PASS = os.getenv("UPSTASH_PASS")
+        return Redis(
+            host=REDIS_HOST,
+            port=REDIS_PORT,
+            password=REDIS_PASS,
+            ssl=True,
+            decode_responses=True,
+        )
 
-if r is None:
-    logger.warning("Redis client is not initialized.")
+    r = _create_client()
+    if r is None:
+        _create_client.cache_clear()
+    return r
 
 
 def set_latest_status(region_db: str, data: list[TrainStatus]) -> None:
+    r = get_redis_client()
     if r is None:
         logger.warning("Redis client is not available. Skipping set operation.")
         return
@@ -44,6 +47,7 @@ def set_latest_status(region_db: str, data: list[TrainStatus]) -> None:
 
 
 def get_previous_status(region_db: str) -> tuple[TrainStatus, ...]:
+    r = get_redis_client()
     if r is None:
         logger.warning("Redis client is not available. Returning empty tuple.")
         return tuple()

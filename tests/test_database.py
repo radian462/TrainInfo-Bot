@@ -1,5 +1,5 @@
 # test_database.py
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from traininfo.database import (
     TrainStatus,
@@ -8,8 +8,11 @@ from traininfo.database import (
 )
 
 
-@patch("traininfo.database.r")
-def test_save_and_load(mock_redis):
+@patch("traininfo.database.get_redis_client")
+def test_save_and_load(mock_get_redis_client):
+    mock_redis = MagicMock()
+    mock_get_redis_client.return_value = mock_redis
+
     data = [TrainStatus(train="山手線", status="平常運転", detail="On time")]
     storage = {}
 

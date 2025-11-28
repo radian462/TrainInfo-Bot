@@ -18,8 +18,6 @@ from utils.server.run import server_run
 
 logger = make_logger("main")
 
-DEBUG = os.getenv("DEBUG", "False").lower() == "true"
-
 
 class RegionalManager:
     def __init__(self, region: Region):
@@ -162,7 +160,8 @@ def main():
 
 
 if __name__ == "__main__":
+    dotenv.load_dotenv()
+    DEBUG = os.getenv("DEBUG", "False").lower() == "true"
     clear_log_file()
     server_run()
-    dotenv.load_dotenv()
     main()
