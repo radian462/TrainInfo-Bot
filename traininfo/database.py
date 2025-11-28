@@ -13,6 +13,16 @@ logger = make_logger(__name__)
 
 
 def get_redis_client() -> Redis | None:
+    """
+    Redisクライアントを作成。一度作成したらキャッシュする。
+    Noneの場合はキャッシュクリア。
+
+    Returns
+    -------
+    Redis | None
+        Redisクライアントのインスタンス。作成に失敗した場合はNone。
+    """
+
     @lru_cache(maxsize=1)
     def _create_client() -> Redis | None:
         REDIS_HOST = os.getenv("UPSTASH_HOST")
@@ -33,6 +43,16 @@ def get_redis_client() -> Redis | None:
 
 
 def set_latest_status(region_db: str, data: list[TrainStatus]) -> None:
+    """
+    最新の運行情報をRedisに保存する。
+
+    Parameters
+    ----------
+    region_db : str
+        データベース名。
+    data : list[TrainStatus]
+        保存する運行情報のリスト。
+    """
     r = get_redis_client()
     if r is None:
         logger.warning("Redis client is not available. Skipping set operation.")
@@ -47,6 +67,19 @@ def set_latest_status(region_db: str, data: list[TrainStatus]) -> None:
 
 
 def get_previous_status(region_db: str) -> tuple[TrainStatus, ...]:
+    """
+    Redisから運行情報のキャッシュを取得する。
+
+    Parameters
+    ----------
+    region_db : str
+        データベース名。
+
+    Returns
+    -------
+    tuple[TrainStatus, ...]
+        取得した運行情報のタプル。データが存在しない場合は空のタプルを返す。
+    """
     r = get_redis_client()
     if r is None:
         logger.warning("Redis client is not available. Returning empty tuple.")
