@@ -6,3 +6,6 @@ lint:
 
 mypy:
 	uv run mypy .
+
+run:
+	uv run main.py
