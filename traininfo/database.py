@@ -18,9 +18,13 @@ def get_redis_client() -> Redis | None:
         REDIS_HOST = os.getenv("UPSTASH_HOST")
         REDIS_PORT = os.getenv("UPSTASH_PORT")
         REDIS_PASS = os.getenv("UPSTASH_PASS")
+
+        if not REDIS_HOST or not REDIS_PORT or not REDIS_PASS:
+            return None
+
         return Redis(
             host=REDIS_HOST,
-            port=REDIS_PORT,
+            port=int(REDIS_PORT),
             password=REDIS_PASS,
             ssl=True,
             decode_responses=True,
