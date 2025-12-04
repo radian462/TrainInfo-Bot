@@ -47,7 +47,7 @@ class BaseTrainInfoClient(ABC):
         pass
 
     @abstractmethod
-    def _parse(self, r: requests.Response) -> TrainInfoResponse:
+    def _parse(self, r: requests.Response) -> tuple[TrainStatus, ...]:
         """
         レスポンスを解析してTrainInfoResponseを返す。
 
