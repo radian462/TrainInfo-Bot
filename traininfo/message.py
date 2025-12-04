@@ -12,12 +12,44 @@ ORDER_PRIORITY = {
 
 
 def sort_status(trains: tuple[TrainStatus, ...]) -> tuple[TrainStatus, ...]:
+    """
+    運行状況を優先度順にソートする。
+
+    Parameters
+    ----------
+    trains : tuple[TrainStatus, ...]
+        ソートする運行状況のタプル。
+
+    Returns
+    -------
+    tuple[TrainStatus, ...]
+        ソートされた運行状況のタプル。
+    """
     return tuple(sorted(trains, key=lambda t: ORDER_PRIORITY.get(t.status, 999)))
 
 
 def create_message(
     latest: tuple[TrainStatus, ...], previous: tuple[TrainStatus, ...], width: int = 300
 ) -> list[str]:
+    """
+    運行状況の変化に基づいてメッセージを作成する。
+    運行状況は優先度順にソートされ、変更点、新規、解決済み、変化なしの順にメッセージが生成される。
+    変化がない場合は「運行状況に変更はありません。」というメッセージを返す。
+
+    Parameters
+    ----------
+    latest : tuple[TrainStatus, ...]
+        最新の運行状況のタプル。
+    previous : tuple[TrainStatus, ...]
+        前回の運行状況のタプル。
+    width : int, optional
+        メッセージの最大幅。デフォルトは300。
+
+    Returns
+    -------
+    list[str]
+        作成されたメッセージのリスト。
+    """
     latest = sort_status(latest)
     previous = sort_status(previous)
 
