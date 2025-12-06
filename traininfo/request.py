@@ -25,6 +25,22 @@ class TrainInfoClient:
         retry_sleep: float = 1.0,
         yahoo_app_id: str | None = None,
     ) -> None:
+        """
+        複数の情報源から運行情報を取得するクライアント
+        Parameters
+        ----------
+        region : Region
+            運行情報を取得する地域。
+        proxy : dict[str, str] | None, optional
+            プロキシ設定。デフォルトはNone。
+        timeout : int, optional
+            リクエストのタイムアウト時間（秒）。デフォルトは10秒。
+        retry_sleep : float, optional
+            リトライ時の待機時間（秒）。デフォルトは1.0秒。
+        yahoo_app_id : str | None, optional
+            Yahoo APIのアプリケーションID。デフォルトはNone。
+        """
+
         self.region = region
         self.proxy = proxy
         self.timeout = timeout
@@ -68,6 +84,16 @@ class TrainInfoClient:
             )
 
     def request(self) -> TrainInfoResponse:
+        """
+        運行情報を取得する。
+        登録されたクライアントを優先度順に試行し、最初に成功したものを返す。
+        すべてのクライアントが失敗した場合は、失敗のレスポンスを返す。
+
+        Returns
+        -------
+        TrainInfoResponse
+            運行情報のレスポンス。
+        """
         sorted_clients = sorted(self.clients, key=lambda x: x.priority)
         for client_info in sorted_clients:
             client = client_info.client
