@@ -12,6 +12,32 @@ from utils.make_logger import make_logger
 
 
 class RegionalManager:
+    """
+    各地域ごとの投稿管理を行うクラス
+
+    Attributes
+    ----------
+    region : Region
+        管理対象の地域
+    traininfo_client : TrainInfoClient
+        運行情報取得クライアント
+    logger : Logger
+        ロガー
+    clients : list[BlueskyClient | MisskeyIOClient]
+        各サービスのクライアントリスト
+
+    Methods
+    -------
+    login_all() -> bool
+        すべてのクライアントでログインを試みる
+    get_auth(service: Service, auth_type: AuthType) -> tuple[str, ...] | None
+        指定されたサービスと認証タイプに基づいて認証情報を取得する
+    get_table_name() -> str | None
+        データベースのテーブル名を取得する
+    execute() -> None
+        運行情報の取得、メッセージの生成、投稿を実行する
+    """
+
     def __init__(self, region: Region):
         self.region = region
         self.traininfo_client = TrainInfoClient(
@@ -23,6 +49,14 @@ class RegionalManager:
         self.login_all()
 
     def login_all(self) -> bool:
+        """
+        すべてのクライアントでログインを試みる
+
+        Returns
+        -------
+        bool
+            すべてのクライアントが正常にログインできた場合はTrue、そうでない場合はFalse
+        """
         is_succeed = [
             client.login(*self.get_auth(service, client.auth_type))
             for service, client in zip(Service, self.clients)
@@ -35,6 +69,21 @@ class RegionalManager:
             return False
 
     def get_auth(self, service: Service, auth_type: AuthType) -> tuple[str, ...] | None:
+        """
+        指定されたサービスと認証タイプに基づいて認証情報を取得する
+
+        Parameters
+        ----------
+        service : Service
+            認証情報を取得するサービス
+        auth_type : AuthType
+            認証タイプ（USERNAME_PASSWORDまたはTOKEN）
+
+        Returns
+        -------
+        tuple[str, ...] | None
+            認証情報のタプル、または認証情報が見つからない場合はNone
+        """
         service_name = service.label.upper()
         region = self.region.label.upper()
         if auth_type == AuthType.USERNAME_PASSWORD:
@@ -58,6 +107,14 @@ class RegionalManager:
             return (token,)
 
     def get_table_name(self) -> str | None:
+        """
+        データベースのテーブル名を取得する
+
+        Returns
+        -------
+        str | None
+            テーブル名、またはテーブル名が見つからない場合はNone
+        """
         table_name = os.getenv(f"{self.region.label.upper()}_DB")
 
         if not table_name:
@@ -67,6 +124,10 @@ class RegionalManager:
         return table_name
 
     def execute(self) -> None:
+        """
+        運行情報の取得、メッセージの生成、投稿を実行する
+        """
+
         def post(
             client: BlueskyClient | MisskeyIOClient,
             data: tuple[TrainStatus, ...],
