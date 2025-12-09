@@ -49,6 +49,7 @@ class TrainInfoClient:
         self.logger = make_logger(type(self).__name__, context=region.label.upper())
         self.session = requests.Session()
         self.session.proxies = proxy
+        self.clients: list[ClientsInfo] = []
 
         self.yahoo_app_id = yahoo_app_id
 
@@ -57,31 +58,35 @@ class TrainInfoClient:
                 "Yahoo APP ID is not provided. Sub source requests may fail."
             )
 
-        self.clients: list[ClientsInfo] = [
-            ClientsInfo(
-                NHKClient(
-                    session=self.session,
-                    region=region,
-                    timeout=timeout,
-                    retry_sleep=retry_sleep,
-                ),
-                priority=1,
-            )
-        ]
+        self._register_clients()
 
-        if self.yahoo_app_id:
-            self.clients.append(
-                ClientsInfo(
-                    YahooClient(
-                        session=self.session,
-                        region=region,
-                        timeout=timeout,
-                        retry_sleep=retry_sleep,
-                        yahoo_app_id=self.yahoo_app_id,
-                    ),
-                    priority=2,
-                )
-            )
+    def _register_clients(self) -> None:
+        """
+        クラスに利用可能なクライアントを登録する。
+        クライアントは優先度と共に登録される。
+        """
+        # クライアントと優先度を設定。
+        _CLIENTS = ((NHKClient, 1), (YahooClient, 2))
+
+        for client, priority in _CLIENTS:
+            args = {
+                "region": self.region,
+                "session": self.session,
+                "timeout": self.timeout,
+                "retry_sleep": self.retry_sleep,
+            }
+
+            if client is YahooClient:
+                if self.yahoo_app_id:
+                    args["yahoo_app_id"] = self.yahoo_app_id
+                else:
+                    self.logger.warning(
+                        "Skipping YahooClient registration due to missing APP ID."
+                    )
+                    continue
+
+            instance = client(**args)
+            self.clients.append(ClientsInfo(client=instance, priority=priority))
 
     def request(self) -> TrainInfoResponse:
         """
@@ -116,3 +121,19 @@ class TrainInfoClient:
             data=None,
             error="All sources failed to retrieve data.",
         )
+
+
+if __name__ == "__main__":
+    import os
+
+    import dotenv
+
+    dotenv.load_dotenv()
+    client = TrainInfoClient(
+        region=Region.KANTO, yahoo_app_id=os.getenv("YAHOO_APP_ID")
+    )
+    response = client.request()
+    if response.is_success:
+        print(response.data)
+    else:
+        print(f"Error fetching data: {response.error}")
