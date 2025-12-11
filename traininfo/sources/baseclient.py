@@ -2,6 +2,7 @@ import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from json import JSONDecodeError
+from typing import Any
 
 import requests
 
@@ -19,6 +20,9 @@ class TrainInfoResponse:
 
 
 class BaseTrainInfoClient(ABC):
+    ROOT: str | None = None
+    TRAININFO_ENDPOINT: str | None = None
+
     def __init__(
         self,
         session: requests.Session,
@@ -35,26 +39,27 @@ class BaseTrainInfoClient(ABC):
         self.retry_times = retry_times
 
     @abstractmethod
-    def _fetch(self) -> tuple[TrainStatus, ...]:
+    def _fetch(self) -> Any:
         """
         データを取得する。self.requestでラップするため、エラーハンドリングは不要。
 
         Returns
         -------
-        tuple[TrainStatus, ...]
-            取得したデータのタプル
+        any
+            取得した生データ
         """
         pass
 
     @abstractmethod
-    def _parse(self, r: requests.Response) -> tuple[TrainStatus, ...]:
+    def _parse(self, raw: Any) -> tuple[TrainStatus, ...]:
         """
-        レスポンスを解析して tuple[TrainStatus, ...]を返す。
+        生データを解析して tuple[TrainStatus, ...]を返す。
 
         Parameters
         ----------
-        r : requests.Response
-            取得したレスポンス
+        raw: dict[any]
+            生データ
+
         Returns
         -------
         tuple[TrainStatus, ...]
@@ -74,13 +79,17 @@ class BaseTrainInfoClient(ABC):
         """
         for i in range(self.retry_times):
             try:
+                raw = self._fetch()
                 return TrainInfoResponse(
                     is_success=True,
-                    data=self._fetch(),
+                    data=self._parse(raw),
                     error=None,
                 )
             except JSONDecodeError as e:
                 self.logger.error(f"JSON decode error. no retry: {e}")
+                break
+            except ValueError as e:
+                self.logger.error(f"Value error while decoding JSON: {e}")
                 break
             except requests.Timeout as e:
                 self.logger.warning(f"Request timed out: {e}")

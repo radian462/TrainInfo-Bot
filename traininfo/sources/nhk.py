@@ -1,3 +1,5 @@
+from typing import Any
+
 import requests
 
 from enums import Region
@@ -8,6 +10,9 @@ from .baseclient import BaseTrainInfoClient
 
 
 class NHKClient(BaseTrainInfoClient):
+    ROOT = "https://www.nhk.or.jp"
+    TRAININFO_ENDPOINT = "/n-data/traffic/train/traininfo_area_0{}.json"
+
     def __init__(
         self,
         session: requests.Session,
@@ -23,24 +28,19 @@ class NHKClient(BaseTrainInfoClient):
             retry_sleep=retry_sleep,
             retry_times=retry_times,
         )
-        self.NHK_ENDPOINT = (
-            "https://www.nhk.or.jp/n-data/traffic/train/traininfo_area_0%s.json"
-        )
 
-    def _fetch(self) -> tuple[TrainStatus, ...]:
+    def _fetch(self) -> Any:
         r = self.session.get(
-            self.NHK_ENDPOINT % self.region.id,
+            self.ROOT + self.TRAININFO_ENDPOINT.format(self.region.id),
             timeout=self.timeout,
         )
         r.raise_for_status()
 
-        return self._parse(r)
+        return r.json()
 
-    def _parse(self, r: requests.Response) -> tuple[TrainStatus, ...]:
-        data = r.json()
-        original_data = data.get("channel", {}).get("item", []) + data.get(
-            "channel", {}
-        ).get("itemLong", [])
+    def _parse(self, raw: Any) -> tuple[TrainStatus, ...]:
+        channel = raw.get("channel", {})
+        original_data = channel.get("item", []) + channel.get("itemLong", [])
 
         return tuple(
             TrainStatus(

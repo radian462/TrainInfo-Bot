@@ -1,3 +1,5 @@
+from typing import Any
+
 import requests
 
 from enums import Region
@@ -8,6 +10,9 @@ from .baseclient import BaseTrainInfoClient
 
 
 class YahooClient(BaseTrainInfoClient):
+    ROOT = "https://cache-diainfo-transit.yahooapis.jp/"
+    TRAININFO_ENDPOINT = "/v4/diainfo/train"
+
     def __init__(
         self,
         session: requests.Session,
@@ -25,14 +30,11 @@ class YahooClient(BaseTrainInfoClient):
             retry_times=retry_times,
         )
         self.yahoo_app_id = yahoo_app_id
-        self.YAHOO_ENDPOINT = (
-            "https://cache-diainfo-transit.yahooapis.jp/v4/diainfo/train"
-        )
 
-    def _fetch(self) -> tuple[TrainStatus, ...]:
+    def _fetch(self) -> Any:
         if not self.yahoo_app_id:
             self.logger.error("Missing Yahoo App ID")
-            return ()
+            return None
 
         params = {
             "area": self.region.id,
@@ -47,17 +49,16 @@ class YahooClient(BaseTrainInfoClient):
         }
 
         r = self.session.get(
-            self.YAHOO_ENDPOINT,
+            self.ROOT + self.TRAININFO_ENDPOINT,
             params=params,
             headers=headers,
         )
 
         r.raise_for_status()
-        return self._parse(r)
+        return r.json()
 
-    def _parse(self, r: requests.Response) -> tuple[TrainStatus, ...]:
-        r = r.json()
-        features = r.get("feature", [])
+    def _parse(self, raw: Any) -> tuple[TrainStatus, ...]:
+        features = raw.get("feature", [])
         train_statuses = []
         for feature in features:
             routeinfo = feature.get("routeInfo", {})
