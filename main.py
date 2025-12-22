@@ -5,10 +5,10 @@ from threading import Thread
 
 from dotenv import load_dotenv
 
-from app.manager import RegionalManager
 from enums import Region
+from runner.manager import RegionalManager
+from server.run import server_run
 from utils.make_logger import clear_log_file, make_logger
-from utils.server.run import server_run
 
 logger = make_logger("Main")
 

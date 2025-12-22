@@ -3,7 +3,7 @@ import os
 
 from bottle import Bottle, request, response, static_file
 
-from ..make_logger import LOG_FILE_PATH
+from utils.make_logger import LOG_FILE_PATH
 
 logs_app = Bottle()
 
