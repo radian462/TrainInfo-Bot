@@ -1,7 +1,7 @@
 import os
 import time
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
-from threading import Thread
 
 from dotenv import load_dotenv
 
@@ -13,27 +13,29 @@ from utils.make_logger import clear_log_file, make_logger
 logger = make_logger("Main")
 
 
+def _calc_next_execute(interval: int, now: datetime | None = None) -> datetime:
+    now = now or datetime.now()
+    timestamp = int(now.timestamp())
+
+    next_ts = (timestamp // interval + 1) * interval
+    return datetime.fromtimestamp(next_ts)
+
+
 def main():
     managers = [RegionalManager(region) for region in Region]
+    interval = 600 if not DEBUG else 60  # seconds
 
-    interval = 10 if not DEBUG else 1
     while True:
-        minutes, seconds = datetime.now().minute, datetime.now().second
+        next_execute = _calc_next_execute(interval=interval)
+        now = datetime.now()
+        sleep_sec = (next_execute - now).total_seconds()
+        if sleep_sec > 0:
+            logger.info(f"Sleep {int(sleep_sec)} seconds")
+            logger.info(f"Next execution at {next_execute:%H:%M:%S}")
+            time.sleep(sleep_sec)
 
-        threads = []
-        if minutes % interval == 0:
-            threads = [Thread(target=m.execute) for m in managers]
-            for thread in threads:
-                thread.start()
-
-            for thread in threads:
-                thread.join()
-
-        next_minute = (minutes // interval + 1) * interval
-        wait_time = (next_minute - minutes) * 60 - seconds
-        logger.info(f"Sleep {wait_time} seconds")
-        logger.info(f"Next execution at {next_minute:02d}:00")
-        time.sleep(wait_time)
+        with ThreadPoolExecutor() as executor:
+            executor.map(lambda m: m.execute(), managers)
 
 
 if __name__ == "__main__":
