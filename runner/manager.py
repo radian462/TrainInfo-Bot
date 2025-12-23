@@ -1,5 +1,5 @@
 import os
-from threading import Thread
+from concurrent.futures import ThreadPoolExecutor
 
 from clients.bluesky import BlueskyClient
 from clients.misskeyio import MisskeyIOClient
@@ -32,7 +32,7 @@ class RegionalManager:
         すべてのクライアントでログインを試みる
     get_auth(service: Service, auth_type: AuthType) -> tuple[str, ...] | None
         指定されたサービスと認証タイプに基づいて認証情報を取得する
-    get_table_name() -> str | None
+    _get_table_name() -> str | None
         データベースのテーブル名を取得する
     execute() -> None
         運行情報の取得、メッセージの生成、投稿を実行する
@@ -106,7 +106,26 @@ class RegionalManager:
 
             return (token,)
 
-    def get_table_name(self) -> str | None:
+    def execute(self) -> None:
+        """
+        運行情報の取得、メッセージの生成、投稿を実行する
+        """
+        table_name = self._get_table_name()
+        now = self._fetch_now_train_info()
+        prev = self._fetch_prev_train_info(table_name=table_name)
+
+        if not now or not prev:
+            return
+
+        messages = create_message(now, prev)
+        if messages == ["運行状況に変更はありません。"]:
+            self.logger.info("No changes in train status")
+            return
+
+        self._save_latest_data(table_name=table_name, data=now)
+        self._post_messages(now, prev)
+
+    def _get_table_name(self) -> str | None:
         """
         データベースのテーブル名を取得する
 
@@ -123,39 +142,14 @@ class RegionalManager:
 
         return table_name
 
-    def execute(self) -> None:
-        """
-        運行情報の取得、メッセージの生成、投稿を実行する
-        """
-
-        def post(
-            client: BlueskyClient | MisskeyIOClient,
-            data: tuple[TrainStatus, ...],
-            previous: tuple[TrainStatus, ...],
-        ) -> None:
-            messages = create_message(data, previous, width=client.post_string_limit)
-            post = None
-            for i, message in enumerate(messages):
-                try:
-                    post = client.post(message, post.ref if post and post.ref else None)
-                    if post.success:
-                        self.logger.info(
-                            f"Completed posting to {client.service_name} {i + 1}/{len(messages)}"
-                        )
-                    else:
-                        self.logger.warning(
-                            f"Failed to post message to {client.service_name} {i + 1}/{len(messages)}"
-                        )
-                except Exception:
-                    self.logger.error("Failed to post message", exc_info=True)
-
+    def _fetch_now_train_info(self) -> tuple[TrainStatus, ...]:
         result = self.traininfo_client.request()
-        if not result.data and result.is_success:
+        if not result.data or not result.is_success:
             self.logger.info("No data retrieved from TrainInfoClient")
-            return
-        data = result.data if result.data else tuple()
-        table_name = self.get_table_name()
+            return tuple()
+        return result.data
 
+    def _fetch_prev_train_info(self, table_name: str | None) -> tuple[TrainStatus, ...]:
         try:
             if table_name is not None:
                 previous = get_previous_status(table_name)
@@ -164,12 +158,11 @@ class RegionalManager:
         except Exception:
             self.logger.error("Failed to get previous data", exc_info=True)
             previous = tuple()
+        return previous
 
-        messages = create_message(data, previous)
-        if messages == ["運行状況に変更はありません。"]:
-            self.logger.info("No changes in train status")
-            return
-
+    def _save_latest_data(
+        self, table_name: str | None, data: tuple[TrainStatus, ...]
+    ) -> None:
         try:
             if table_name is not None:
                 set_latest_status(table_name, list(data))
@@ -178,12 +171,33 @@ class RegionalManager:
         except Exception:
             self.logger.error("Failed to save data", exc_info=True)
 
-        threads = [
-            Thread(target=post, args=(client, data, previous))
-            for client in self.clients
-        ]
-        for t in threads:
-            t.start()
+    def _post(
+        self,
+        client: BlueskyClient | MisskeyIOClient,
+        data: tuple[TrainStatus, ...],
+        prev: tuple[TrainStatus, ...],
+    ) -> None:
+        messages = create_message(data, prev, width=client.post_string_limit)
+        post = None
+        for i, message in enumerate(messages):
+            try:
+                post = client.post(message, post.ref if post and post.ref else None)
+                if post.success:
+                    self.logger.info(
+                        f"Completed posting to {client.service_name} {i + 1}/{len(messages)}"
+                    )
+                else:
+                    self.logger.warning(
+                        f"Failed to post message to {client.service_name} {i + 1}/{len(messages)}"
+                    )
+            except Exception:
+                self.logger.error("Failed to post message", exc_info=True)
 
-        for t in threads:
-            t.join()
+    def _post_messages(
+        self, data: tuple[TrainStatus, ...], prev: tuple[TrainStatus, ...]
+    ) -> None:
+        with ThreadPoolExecutor() as executor:
+            executor.map(
+                lambda client: self._post(client, data, prev),
+                self.clients,
+            )
