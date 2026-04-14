@@ -45,7 +45,7 @@ class NHKClient(BaseTrainInfoClient):
         return tuple(
             TrainStatus(
                 train=o.get("trainLine", ""),
-                status=status_normalizer(o.get("status", "")),
+                status=status_normalizer(o.get("detailStatusName", "")),
                 detail=o.get("textLong", ""),
             )
             for o in original_data
