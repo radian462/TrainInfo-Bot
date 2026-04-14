@@ -66,7 +66,7 @@ class TrainInfoClient:
         クライアントは優先度と共に登録される。
         """
         # クライアントと優先度を設定。
-        _CLIENTS = ((NHKClient, 1), (YahooClient, 2))
+        _CLIENTS = ((NHKClient, 2), (YahooClient, 1))
 
         for client, priority in _CLIENTS:
             args = {
