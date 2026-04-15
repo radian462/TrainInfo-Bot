@@ -8,6 +8,7 @@ dependencies = [
     "bottle>=0.13.4",
     "misskey-py>=4.1.0",
     "python-dotenv>=1.1.1",
+    "pyyaml>=6.0.3",
     "redis>=6.4.0",
     "requests>=2.32.5",
     "rich>=14.1.0",
@@ -19,6 +20,7 @@ dev = [
     "pre-commit>=4.3.0",
     "pytest>=8.4.2",
     "ruff>=0.14.0",
+    "types-pyyaml>=6.0.12.20260408",
 ]
 
 [tool.pytest.ini_options]

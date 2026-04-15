@@ -1,16 +1,14 @@
 from typing import Final
 
-STATUS_EMOJI: Final[dict] = {
-    "運転見合わせ": "🛑",
-    "列車遅延": "🕒",
-    "運転情報": "ℹ️",
-    "運転状況": "ℹ️",
-    "運転計画": "🗒️",
-    "交通障害情報": "🚧",
-    "運転再開": "🚋",
-    "平常運転": "🚋",
-    "その他": "⚠️",
-}
+import yaml
+
+with open("./traininfo/status.yaml", "r") as f:
+    data = yaml.safe_load(f) or {}
+    statuses = data.get("statuses", {})
+    STATUS_EMOJI: Final[dict[str, str]] = {
+        key: value.get("emoji", "") for key, value in statuses.items()
+    }
+    print(STATUS_EMOJI)
 
 
 def status_normalizer(status: str) -> str:

@@ -1,0 +1,40 @@
+#API仕様はYahooに統一する形
+#priorityは数値が小さいほど優先度が高い
+
+statuses:
+  運転見合わせ:
+    priority: 1
+    emoji: "🛑"
+    
+
+  列車遅延:
+    priority: 2
+    emoji: "🕒"
+
+  運転情報:
+    priority: 3
+    emoji: "ℹ️"
+
+  運転状況:
+    priority: 4
+    emoji: "ℹ️"
+
+  運転計画:
+    priority: 5
+    emoji: "🗒️"
+
+  交通障害情報:
+    priority: 6
+    emoji: "🚧"
+
+  運転再開:
+    priority: 7
+    emoji: "🚋"
+
+  平常運転:
+    priority: 8
+    emoji: "🚋"
+
+  その他:
+    priority: 9
+    emoji: "⚠️"

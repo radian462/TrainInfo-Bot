@@ -1,14 +1,22 @@
+from typing import Final
+
+import yaml
+
 from utils.make_logger import make_logger
 
-from .normalizer import STATUS_EMOJI, status_normalizer
+from .normalizer import status_normalizer
 from .trainstatus import TrainStatus
 
 logger = make_logger("message")
 
 DEFAULT_MESSAGE = "現在、ほぼ平常通り運転しています。"
-ORDER_PRIORITY = {
-    status_normalizer(key): i for i, (key, value) in enumerate(STATUS_EMOJI.items())
-}
+with open("./traininfo/status.yaml", "r") as f:
+    data = yaml.safe_load(f) or {}
+    statuses = data.get("statuses", {})
+    ORDER_PRIORITY: Final[dict[str, int]] = {
+        status_normalizer(key): value.get("priority", 999)
+        for key, value in statuses.items()
+    }
 
 
 def sort_status(trains: tuple[TrainStatus, ...]) -> tuple[TrainStatus, ...]:
