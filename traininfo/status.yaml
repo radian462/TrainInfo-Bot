@@ -5,7 +5,6 @@ statuses:
   運転見合わせ:
     priority: 1
     emoji: "🛑"
-    
 
   列車遅延:
     priority: 2
@@ -27,14 +26,18 @@ statuses:
     priority: 6
     emoji: "🚧"
 
-  運転再開:
+  ダイヤ乱れ:
     priority: 7
-    emoji: "🚋"
+    emoji: "🚧"
 
-  平常運転:
+  運転再開:
     priority: 8
     emoji: "🚋"
 
-  その他:
+  平常運転:
     priority: 9
+    emoji: "🚋"
+
+  その他:
+    priority: 10
     emoji: "⚠️"
