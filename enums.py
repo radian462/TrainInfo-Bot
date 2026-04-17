@@ -56,14 +56,3 @@ class Service(Enum):
     @property
     def label(self):
         return self.value[0]
-
-    @property
-    def client(self):
-        if self is Service.BLUESKY:
-            from clients.bluesky import BlueskyClient
-
-            return BlueskyClient
-        elif self is Service.MISSKEYIO:
-            from clients.misskeyio import MisskeyIOClient
-
-            return MisskeyIOClient

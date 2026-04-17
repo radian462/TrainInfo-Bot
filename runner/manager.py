@@ -38,13 +38,21 @@ class RegionalManager:
         運行情報の取得、メッセージの生成、投稿を実行する
     """
 
+    _CLIENT_MAP = {
+        Service.BLUESKY: BlueskyClient,
+        Service.MISSKEYIO: MisskeyIOClient,
+    }
+
     def __init__(self, region: Region):
         self.region = region
         self.traininfo_client = TrainInfoClient(
             region, yahoo_app_id=os.getenv("YAHOO_APP_ID")
         )
         self.logger = make_logger(type(self).__name__, context=region.label.upper())
-        self.clients = [service.client(region.label.upper()) for service in Service]
+        self.clients = [
+            client_class(region.label.upper())
+            for client_class in self._CLIENT_MAP.values()
+        ]
 
         self.login_all()
 
@@ -57,16 +65,21 @@ class RegionalManager:
         bool
             すべてのクライアントが正常にログインできた場合はTrue、そうでない場合はFalse
         """
-        is_succeed = [
-            client.login(*self.get_auth(service, client.auth_type))
-            for service, client in zip(Service, self.clients)
-        ]
+        is_succeed: list[bool] = []
+
+        for service, client in zip(Service, self.clients):
+            auth = self.get_auth(service, client.auth_type)
+            if auth is None:
+                is_succeed.append(False)
+                continue
+            is_succeed.append(client.login(*auth))
+
         if all(is_succeed):
             self.logger.info(f"All clients logged in for {self.region.label}")
             return True
-        else:
-            self.logger.error(f"Some clients failed to log in for {self.region.label}")
-            return False
+
+        self.logger.error(f"Some clients failed to log in for {self.region.label}")
+        return False
 
     def get_auth(self, service: Service, auth_type: AuthType) -> tuple[str, ...] | None:
         """
