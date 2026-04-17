@@ -6,9 +6,10 @@ with open("./traininfo/status.yaml", "r") as f:
     data = yaml.safe_load(f) or {}
     statuses = data.get("statuses", {})
     STATUS_EMOJI: Final[dict[str, str]] = {
-        key: value.get("emoji", "") for key, value in statuses.items()
+        item["label"]: item.get("emoji", "")
+        for item in statuses.values()
+        if item.get("label")
     }
-    print(STATUS_EMOJI)
 
 
 def status_normalizer(status: str) -> str:

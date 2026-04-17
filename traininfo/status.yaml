@@ -1,43 +1,64 @@
-#API仕様はYahooに統一する形
-#priorityは数値が小さいほど優先度が高い
+# API仕様はYahooに統一する形
+# priorityは数値が小さいほど優先度が高い
 
 statuses:
-  運転見合わせ:
+  suspended:
+    label: "運転見合わせ"
     priority: 1
     emoji: "🛑"
+    NHK_code: ["01"]
 
-  列車遅延:
+  delay:
+    label: "列車遅延"
     priority: 2
     emoji: "🕒"
+    NHK_code: []
 
-  運転情報:
+  info:
+    label: "運転情報"
     priority: 3
     emoji: "ℹ️"
+    NHK_code: []
 
-  運転状況:
+  operation_status:
+    label: "運転状況"
     priority: 4
     emoji: "ℹ️"
+    NHK_code: []
 
-  運転計画:
+  # NHKAPIでは上3つのステータスを包括する広義のステータスとして「ダイヤ乱れ」があるため、これを追加する
+  service_disruption:
+    label: "ダイヤ乱れ"
     priority: 5
-    emoji: "🗒️"
+    emoji: "🕒"
+    NHK_code: ["03"]
 
-  交通障害情報:
+  plan:
+    label: "運転計画"
     priority: 6
-    emoji: "🚧"
+    emoji: "🗒️"
+    NHK_code: ["04"]
 
-  ダイヤ乱れ:
+  traffic_disruption:
+    label: "交通障害情報"
     priority: 7
     emoji: "🚧"
+    NHK_code: []
 
-  運転再開:
+  resumed:
+    label: "運転再開"
     priority: 8
     emoji: "🚋"
+    NHK_code: []
 
-  平常運転:
+  normal:
+    label: "平常運転"
     priority: 9
     emoji: "🚋"
+    NHK_code: ["00","06"]
 
-  その他:
+  other:
+    label: "その他"
     priority: 10
     emoji: "⚠️"
+    NHK_code: ["07", "08"] # Yahooでの「その他」に相当する

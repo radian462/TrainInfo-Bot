@@ -14,8 +14,9 @@ with open("./traininfo/status.yaml", "r") as f:
     data = yaml.safe_load(f) or {}
     statuses = data.get("statuses", {})
     ORDER_PRIORITY: Final[dict[str, int]] = {
-        status_normalizer(key): value.get("priority", 999)
-        for key, value in statuses.items()
+        status_normalizer(item["label"]): item.get("priority", 999)
+        for item in statuses.values()
+        if item.get("label")
     }
 
 
