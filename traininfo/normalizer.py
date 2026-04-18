@@ -56,6 +56,7 @@ def add_emoji_prefix(status: str) -> str:
 def status_normalizer(status: str | None = None, NHK_code: str | None = None) -> str:
     """
     運行状況を正規化する。
+    statusとNHK_codeの両方が提供された場合、NHK_codeを優先して変換する。
     運行状況は先頭に絵文字を付与して返す。運行状況が部分一致する場合も対応する。
     対応する運行状況がない場合は「⚠️その他」を返す。
 
@@ -63,6 +64,8 @@ def status_normalizer(status: str | None = None, NHK_code: str | None = None) ->
     ----------
     status : str
         正規化する運行状況。
+    NHK_code : str
+        正規化するNHKの運行状況コード。
 
     Returns
     -------

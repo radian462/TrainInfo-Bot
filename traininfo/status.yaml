@@ -39,6 +39,7 @@ statuses:
     emoji: "🗒️"
     NHK_code: ["04"]
 
+  # このstatusのときのNHK_codeは存在しない
   traffic_disruption:
     label: "交通障害情報"
     priority: 7

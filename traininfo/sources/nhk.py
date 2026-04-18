@@ -45,7 +45,12 @@ class NHKClient(BaseTrainInfoClient):
         return tuple(
             TrainStatus(
                 train=o.get("trainLine", ""),
-                status=status_normalizer(NHK_code=o.get("detailStatusCode", "")),
+                # 「交通障害情報」のときはNHK_codeが存在しないため、statusを渡す必要がある
+                # NHK_codeが存在する場合はNHK_codeが優先して変換されるため、statusを渡しても問題ない
+                status=status_normalizer(
+                    NHK_code=o.get("detailStatusCode", ""),
+                    status=o.get("detailStatusName", ""),
+                ),
                 detail=o.get("textLong", ""),
             )
             for o in original_data

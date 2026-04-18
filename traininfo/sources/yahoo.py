@@ -68,7 +68,7 @@ class YahooClient(BaseTrainInfoClient):
                 train_statuses.append(
                     TrainStatus(
                         train=property_data.get("displayName", ""),
-                        status=status_normalizer(diainfo.get("status", "")),
+                        status=status_normalizer(status=diainfo.get("status", "")),
                         detail=diainfo.get("message", ""),
                     )
                 )
