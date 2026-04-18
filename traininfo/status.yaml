@@ -49,7 +49,7 @@ statuses:
     label: "運転再開"
     priority: 8
     emoji: "🚋"
-    NHK_code: []
+    NHK_code: ["02"]
 
   normal:
     label: "平常運転"
