@@ -117,7 +117,13 @@ class BlueskyClient(BaseSocialClient):
                 }
 
                 if reply_to:
-                    data["record"]["reply"] = self._get_reply_refs(reply_to)
+                    reply_refs = self._get_reply_refs(reply_to)
+                    if reply_refs:
+                        data["record"]["reply"] = reply_refs
+                    else:
+                        self.logger.warning(
+                            "Failed to get reply refs, posting without reply"
+                        )
 
                 response = self.session.post(
                     url, json=data, headers=headers, timeout=20
@@ -215,14 +221,13 @@ class BlueskyClient(BaseSocialClient):
             parent_reply = parent.get("value", {}).get("reply")
             if parent_reply is not None:
                 root_uri = parent_reply.get("root", {}).get("uri")
-                root_repo, root_collection, root_rkey = root_uri.split("/")[2:5]
+                root_parts = self._parse_uri(root_uri)
+                if not root_parts:
+                    self.logger.error("Invalid root URI format")
+                    return {}
                 r = self.session.get(
                     url,
-                    params={
-                        "repo": root_repo,
-                        "collection": root_collection,
-                        "rkey": root_rkey,
-                    },
+                    params=root_parts,
                     timeout=20,
                 )
                 r.raise_for_status()

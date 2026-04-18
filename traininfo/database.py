@@ -12,6 +12,24 @@ from .trainstatus import TrainStatus
 logger = make_logger(__name__)
 
 
+@lru_cache(maxsize=1)
+def _create_redis_client() -> Redis | None:
+    REDIS_HOST = os.getenv("UPSTASH_HOST")
+    REDIS_PORT = os.getenv("UPSTASH_PORT")
+    REDIS_PASS = os.getenv("UPSTASH_PASS")
+
+    if not REDIS_HOST or not REDIS_PORT or not REDIS_PASS:
+        return None
+
+    return Redis(
+        host=REDIS_HOST,
+        port=int(REDIS_PORT),
+        password=REDIS_PASS,
+        ssl=True,
+        decode_responses=True,
+    )
+
+
 def get_redis_client() -> Redis | None:
     """
     Redisクライアントを作成。一度作成したらキャッシュする。
@@ -22,27 +40,9 @@ def get_redis_client() -> Redis | None:
     Redis | None
         Redisクライアントのインスタンス。作成に失敗した場合はNone。
     """
-
-    @lru_cache(maxsize=1)
-    def _create_client() -> Redis | None:
-        REDIS_HOST = os.getenv("UPSTASH_HOST")
-        REDIS_PORT = os.getenv("UPSTASH_PORT")
-        REDIS_PASS = os.getenv("UPSTASH_PASS")
-
-        if not REDIS_HOST or not REDIS_PORT or not REDIS_PASS:
-            return None
-
-        return Redis(
-            host=REDIS_HOST,
-            port=int(REDIS_PORT),
-            password=REDIS_PASS,
-            ssl=True,
-            decode_responses=True,
-        )
-
-    r = _create_client()
+    r = _create_redis_client()
     if r is None:
-        _create_client.cache_clear()
+        _create_redis_client.cache_clear()
     return r
 
 

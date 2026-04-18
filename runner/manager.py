@@ -1,6 +1,7 @@
 import os
 from concurrent.futures import ThreadPoolExecutor
 
+from clients.baseclient import BaseSocialClient
 from clients.bluesky import BlueskyClient
 from clients.misskeyio import MisskeyIOClient
 from enums import AuthType, Region, Service
@@ -23,8 +24,8 @@ class RegionalManager:
         運行情報取得クライアント
     logger : Logger
         ロガー
-    clients : list[BlueskyClient | MisskeyIOClient]
-        各サービスのクライアントリスト
+    clients : dict[Service, BaseSocialClient]
+        各サービスのクライアント辞書
 
     Methods
     -------
@@ -38,7 +39,7 @@ class RegionalManager:
         運行情報の取得、メッセージの生成、投稿を実行する
     """
 
-    _CLIENT_MAP = {
+    _CLIENT_MAP: dict[Service, type[BlueskyClient] | type[MisskeyIOClient]] = {
         Service.BLUESKY: BlueskyClient,
         Service.MISSKEYIO: MisskeyIOClient,
     }
@@ -49,10 +50,10 @@ class RegionalManager:
             region, yahoo_app_id=os.getenv("YAHOO_APP_ID")
         )
         self.logger = make_logger(type(self).__name__, context=region.label.upper())
-        self.clients = [
-            client_class(region.label.upper())
-            for client_class in self._CLIENT_MAP.values()
-        ]
+        self.clients: dict[Service, BaseSocialClient] = {
+            service: client_class(region.label.upper())
+            for service, client_class in self._CLIENT_MAP.items()
+        }
 
         self.login_all()
 
@@ -67,7 +68,7 @@ class RegionalManager:
         """
         is_succeed: list[bool] = []
 
-        for service, client in zip(Service, self.clients):
+        for service, client in self.clients.items():
             auth = self.get_auth(service, client.auth_type)
             if auth is None:
                 is_succeed.append(False)
@@ -105,7 +106,7 @@ class RegionalManager:
 
             if not username or not password:
                 self.logger.error(
-                    f"Bluesky credentials not set for {self.region.label}"
+                    f"{service.label} credentials not set for {self.region.label}"
                 )
                 return None
 
@@ -114,7 +115,9 @@ class RegionalManager:
             token = os.getenv(f"{service_name}_{region}_TOKEN")
 
             if not token:
-                self.logger.error(f"Misskey token not set for {self.region.label}")
+                self.logger.error(
+                    f"{service.label} token not set for {self.region.label}"
+                )
                 return None
 
             return (token,)
@@ -186,7 +189,7 @@ class RegionalManager:
 
     def _post(
         self,
-        client: BlueskyClient | MisskeyIOClient,
+        client: BaseSocialClient,
         data: tuple[TrainStatus, ...],
         prev: tuple[TrainStatus, ...],
     ) -> None:
@@ -212,5 +215,5 @@ class RegionalManager:
         with ThreadPoolExecutor() as executor:
             executor.map(
                 lambda client: self._post(client, data, prev),
-                self.clients,
+                self.clients.values(),
             )

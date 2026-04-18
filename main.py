@@ -22,6 +22,7 @@ def _calc_next_execute(interval: int, now: datetime | None = None) -> datetime:
 
 
 def main():
+    DEBUG = os.getenv("DEBUG", "False").lower() == "true"
     managers = [RegionalManager(region) for region in Region]
     interval = 600 if not DEBUG else 60  # seconds
 
@@ -40,7 +41,6 @@ def main():
 
 if __name__ == "__main__":
     load_dotenv()
-    DEBUG = os.getenv("DEBUG", "False").lower() == "true"
     clear_log_file()
     server_run()
     main()

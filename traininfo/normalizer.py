@@ -1,8 +1,9 @@
+from pathlib import Path
 from typing import Final
 
 import yaml
 
-with open("./traininfo/status.yaml", "r") as f:
+with open(Path(__file__).parent / "status.yaml", "r") as f:
     data = yaml.safe_load(f) or {}
     statuses = data.get("statuses", {})
     STATUS_EMOJI: Final[dict[str, str]] = {
@@ -12,7 +13,7 @@ with open("./traininfo/status.yaml", "r") as f:
     }
 
 
-def NHK_status_converter(code: str) -> str:
+def _nhk_status_converter(code: str) -> str:
     """
     NHKの運行状況コードを運行状況に変換する。
 
@@ -73,7 +74,7 @@ def status_normalizer(status: str | None = None, NHK_code: str | None = None) ->
         正規化された運行状況。
     """
     if NHK_code:
-        status = NHK_status_converter(NHK_code)
+        status = _nhk_status_converter(NHK_code)
     if status:
         return add_emoji_prefix(status)
     return "⚠️その他"

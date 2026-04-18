@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Final
 
 import yaml
@@ -10,7 +11,7 @@ from .trainstatus import TrainStatus
 logger = make_logger("message")
 
 DEFAULT_MESSAGE = "現在、ほぼ平常通り運転しています。"
-with open("./traininfo/status.yaml", "r") as f:
+with open(Path(__file__).parent / "status.yaml", "r") as f:
     data = yaml.safe_load(f) or {}
     statuses = data.get("statuses", {})
     ORDER_PRIORITY: Final[dict[str, int]] = {
