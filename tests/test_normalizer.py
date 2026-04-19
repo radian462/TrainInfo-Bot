@@ -2,6 +2,7 @@ from traininfo.normalizer import status_normalizer
 
 
 def test_known_status():
+    # 既知のステータス文字列が正しいアイコン付きステータスに変換されること
     assert status_normalizer("運転見合わせ") == "🛑運転見合わせ"
     assert status_normalizer("列車遅延") == "🕒列車遅延"
     assert status_normalizer("運転情報") == "ℹ️運転情報"
@@ -14,17 +15,20 @@ def test_known_status():
 
 
 def test_unknown_status():
+    # 未知のステータス文字列が「その他」に変換されること
     assert status_normalizer("事故発生") == "⚠️その他"
     assert status_normalizer("点検中") == "⚠️その他"
     assert status_normalizer("") == "⚠️その他"
 
 
 def test_partial_match():
+    # ステータス名を部分的に含む文字列が正しく変換されること
     assert status_normalizer("事故による列車遅延") == "🕒列車遅延"
     assert status_normalizer("終日運転見合わせ") == "🛑運転見合わせ"
 
 
 def test_nhk_code():
+    # NHK コードが正しいステータスに変換されること
     assert status_normalizer(NHK_code="00") == "🚋平常運転"
     assert status_normalizer(NHK_code="06") == "🚋平常運転"
     assert status_normalizer(NHK_code="01") == "🛑運転見合わせ"
@@ -36,14 +40,17 @@ def test_nhk_code():
 
 
 def test_nhk_unknown_code_falls_back_to_other():
+    # 未知の NHK コードが「その他」に変換されること
     assert status_normalizer(NHK_code="99") == "⚠️その他"
 
 
 def test_no_args_returns_other():
+    # 引数なしの場合「その他」が返ること
     assert status_normalizer() == "⚠️その他"
 
 
 def test_none_status_returns_other():
+    # None のステータスが「その他」に変換されること
     assert status_normalizer(None) == "⚠️その他"
 
 

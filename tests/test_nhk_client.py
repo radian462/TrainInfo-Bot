@@ -10,6 +10,7 @@ def _make_nhk_client() -> NHKClient:
 
 
 def test_parse_normal_status():
+    # 平常運転コード (00) のアイテムが正しくパースされること
     client = _make_nhk_client()
     raw = {
         "channel": {
@@ -32,6 +33,7 @@ def test_parse_normal_status():
 
 
 def test_parse_delay_status():
+    # ダイヤ乱れコード (03) のアイテムが正しくパースされること
     client = _make_nhk_client()
     raw = {
         "channel": {
@@ -54,6 +56,7 @@ def test_parse_delay_status():
 
 
 def test_parse_suspended_status():
+    # 運転見合わせコード (01) のアイテムが正しくパースされること
     client = _make_nhk_client()
     raw = {
         "channel": {
@@ -73,6 +76,7 @@ def test_parse_suspended_status():
 
 
 def test_parse_item_long():
+    # itemLong のみのデータが正しくパースされること
     client = _make_nhk_client()
     raw = {
         "channel": {
@@ -94,6 +98,7 @@ def test_parse_item_long():
 
 
 def test_parse_merges_item_and_item_long():
+    # item と itemLong を合わせた件数のステータスが返ること
     client = _make_nhk_client()
     raw = {
         "channel": {
@@ -120,6 +125,7 @@ def test_parse_merges_item_and_item_long():
 
 
 def test_parse_empty_channel():
+    # channel の item / itemLong が空の場合、空のタプルが返ること
     client = _make_nhk_client()
     raw = {"channel": {"item": [], "itemLong": []}}
     result = client._parse(raw)
@@ -127,6 +133,7 @@ def test_parse_empty_channel():
 
 
 def test_parse_missing_channel():
+    # channel キーが存在しない場合、空のタプルが返ること
     client = _make_nhk_client()
     raw = {}
     result = client._parse(raw)
@@ -134,6 +141,7 @@ def test_parse_missing_channel():
 
 
 def test_parse_filters_non_dict_items():
+    # dict 以外の要素（文字列・None）が除外されること
     client = _make_nhk_client()
     raw = {
         "channel": {
@@ -156,6 +164,7 @@ def test_parse_filters_non_dict_items():
 
 
 def test_parse_uses_status_name_when_no_nhk_code_match():
+    # NHK コードに対応するマッピングがない場合、ステータス名がそのまま使われること
     client = _make_nhk_client()
     raw = {
         "channel": {

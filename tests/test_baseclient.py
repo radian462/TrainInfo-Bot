@@ -38,6 +38,7 @@ def _make_client(fetch_side_effect=None, fetch_return=None) -> _ConcreteClient:
 
 
 def test_request_success():
+    # リクエストが成功した場合、is_success=True でデータが返ること
     client = _make_client(fetch_return={"ok": True})
     result = client.request()
     assert result.is_success is True
@@ -47,6 +48,7 @@ def test_request_success():
 
 
 def test_request_json_decode_error_no_retry():
+    # JSONDecodeError が発生した場合、リトライせず即座に失敗すること
     client = _make_client(fetch_side_effect=JSONDecodeError("err", "doc", 0))
     result = client.request()
     assert result.is_success is False
@@ -54,6 +56,7 @@ def test_request_json_decode_error_no_retry():
 
 
 def test_request_value_error_no_retry():
+    # ValueError が発生した場合、リトライせず即座に失敗すること
     client = _make_client(fetch_side_effect=ValueError("invalid value"))
     result = client.request()
     assert result.is_success is False
@@ -62,6 +65,7 @@ def test_request_value_error_no_retry():
 
 @patch("time.sleep")
 def test_request_timeout_retries(mock_sleep):
+    # タイムアウトが発生した場合、設定回数リトライすること
     client = _make_client(fetch_side_effect=requests.Timeout())
     result = client.request()
     assert result.is_success is False
@@ -70,6 +74,7 @@ def test_request_timeout_retries(mock_sleep):
 
 @patch("time.sleep")
 def test_request_500_retries(mock_sleep):
+    # 500 エラーが発生した場合、設定回数リトライすること
     mock_response = MagicMock()
     mock_response.status_code = 500
     mock_response.headers = {}
@@ -82,6 +87,7 @@ def test_request_500_retries(mock_sleep):
 
 @patch("time.sleep")
 def test_request_404_no_retry(mock_sleep):
+    # 404 エラーが発生した場合、リトライしないこと
     mock_response = MagicMock()
     mock_response.status_code = 404
     mock_response.headers = {}
@@ -94,6 +100,7 @@ def test_request_404_no_retry(mock_sleep):
 
 @patch("time.sleep")
 def test_request_429_retries_with_retry_after(mock_sleep):
+    # 429 エラーで Retry-After ヘッダがある場合、リトライし sleep が呼ばれること
     mock_response = MagicMock()
     mock_response.status_code = 429
     mock_response.headers = {"Retry-After": "5"}
@@ -107,6 +114,7 @@ def test_request_429_retries_with_retry_after(mock_sleep):
 
 @patch("time.sleep")
 def test_request_429_retries_without_retry_after(mock_sleep):
+    # 429 エラーで Retry-After ヘッダがない場合も設定回数リトライすること
     mock_response = MagicMock()
     mock_response.status_code = 429
     mock_response.headers = {}
@@ -118,6 +126,7 @@ def test_request_429_retries_without_retry_after(mock_sleep):
 
 
 def test_status_exception_handler_429_with_retry_after():
+    # 429 エラーで Retry-After ヘッダがある場合、その値が delay になること
     client = _make_client()
     mock_response = MagicMock()
     mock_response.headers = {"Retry-After": "30"}
@@ -128,6 +137,7 @@ def test_status_exception_handler_429_with_retry_after():
 
 
 def test_status_exception_handler_429_exponential_backoff():
+    # 429 エラーで Retry-After ヘッダがない場合、指数バックオフで delay が計算されること
     client = _make_client()
     mock_response = MagicMock()
     mock_response.headers = {}
@@ -138,6 +148,7 @@ def test_status_exception_handler_429_exponential_backoff():
 
 
 def test_status_exception_handler_500():
+    # 500 エラーの場合、リトライ対象で delay は None になること
     client = _make_client()
     mock_response = MagicMock()
     err = requests.HTTPError(response=mock_response)
@@ -147,6 +158,7 @@ def test_status_exception_handler_500():
 
 
 def test_status_exception_handler_404():
+    # 404 エラーの場合、リトライしないこと
     client = _make_client()
     mock_response = MagicMock()
     err = requests.HTTPError(response=mock_response)

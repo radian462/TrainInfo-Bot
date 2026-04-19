@@ -6,6 +6,7 @@ TrainStatus = SimpleNamespace
 
 
 def test_sort_status():
+    # 様々なステータスが重要度順（運転見合わせ→遅延→情報→平常運転→その他）に並び替えられること
     # ソート前のステータス
     unsorted_status = (
         "🚋平常運転",

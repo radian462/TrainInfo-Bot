@@ -6,6 +6,7 @@ TrainStatus = SimpleNamespace
 
 
 def test_incident_to_another():
+    # 平常運転から遅延へ状態が変化した場合、変化を示すメッセージが生成されること
     previous = (TrainStatus(train="山手線", status="🚋平常運転", detail="問題なし"),)
     latest = (TrainStatus(train="山手線", status="🚋遅延", detail="5分程度の遅れ"),)
 
@@ -15,6 +16,7 @@ def test_incident_to_another():
 
 
 def test_new_incident():
+    # 新たな路線の障害が追加された場合、その路線のメッセージが生成されること
     previous = (TrainStatus(train="山手線", status="🚋平常運転", detail="問題なし"),)
     latest = (
         TrainStatus(train="山手線", status="🚋平常運転", detail="問題なし"),
@@ -27,6 +29,7 @@ def test_new_incident():
 
 
 def test_resolved_incident():
+    # 遅延が解消されて平常運転に戻った場合、解消を示すメッセージが生成されること
     previous = (TrainStatus(train="山手線", status="🚋遅延", detail="5分程度の遅れ"),)
     latest = (TrainStatus(train="山手線", status="🚋平常運転", detail="問題なし"),)
 
@@ -36,6 +39,7 @@ def test_resolved_incident():
 
 
 def test_unchanged_incident():
+    # 既存の障害路線に新規障害路線が追加された場合、両方のメッセージが生成されること
     previous = (TrainStatus(train="山手線", status="🚋遅延", detail="5分程度の遅れ"),)
     latest = (
         TrainStatus(train="中央線", status="🚋遅延", detail="線路内立ち入り"),
@@ -51,6 +55,7 @@ def test_unchanged_incident():
 
 
 def test_normal_to_none():
+    # 平常運転の路線がなくなった場合、変更なしのメッセージが生成されること
     previous = (TrainStatus(train="山手線", status="🚋平常運転", detail="問題なし"),)
     latest = tuple()
 
@@ -60,6 +65,7 @@ def test_normal_to_none():
 
 
 def test_incident_to_none():
+    # 遅延中の路線がなくなった場合、平常運転への回復メッセージが生成されること
     previous = (TrainStatus(train="山手線", status="🚋遅延", detail="5分程度の遅れ"),)
     latest = tuple()
 
@@ -69,6 +75,7 @@ def test_incident_to_none():
 
 
 def test_none_to_incident():
+    # 以前データがない状態で遅延が検出された場合、新規障害メッセージが生成されること
     previous = tuple()
     latest = (TrainStatus(train="山手線", status="🚋遅延", detail="5分程度の遅れ"),)
 
@@ -78,6 +85,7 @@ def test_none_to_incident():
 
 
 def test_message_splitting_by_width():
+    # width を超えるコンテンツがある場合、複数のメッセージに分割されること
     long_detail = "x" * 200
     latest = (
         TrainStatus(train="路線A", status="🕒列車遅延", detail=long_detail),
@@ -94,6 +102,7 @@ def test_message_splitting_by_width():
 
 
 def test_many_incidents_split_into_multiple_messages():
+    # 大量の障害情報が width を超える場合、各メッセージが width 以下に収まること
     latest = tuple(
         TrainStatus(train=f"路線{i:02d}", status="🕒列車遅延", detail="遅延が発生しています")
         for i in range(10)

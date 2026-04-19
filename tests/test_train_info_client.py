@@ -9,6 +9,7 @@ _DUMMY_STATUS = (TrainStatus(train="山手線", status="🚋平常運転", detai
 
 
 def test_request_returns_success():
+    # NHK クライアントが成功した場合、その結果が返ること
     with patch("traininfo.request.NHKClient") as MockNHK:
         mock_nhk = MagicMock()
         MockNHK.return_value = mock_nhk
@@ -24,6 +25,7 @@ def test_request_returns_success():
 
 
 def test_request_returns_failure_when_all_clients_fail():
+    # 全クライアントが失敗した場合、エラーメッセージが返ること
     with patch("traininfo.request.NHKClient") as MockNHK:
         mock_nhk = MagicMock()
         MockNHK.return_value = mock_nhk
@@ -39,6 +41,7 @@ def test_request_returns_failure_when_all_clients_fail():
 
 
 def test_yahoo_has_higher_priority_than_nhk():
+    # yahoo_app_id が指定された場合、Yahoo が NHK より先に試みられること
     with (
         patch("traininfo.request.NHKClient") as MockNHK,
         patch("traininfo.request.YahooClient") as MockYahoo,
@@ -61,6 +64,7 @@ def test_yahoo_has_higher_priority_than_nhk():
 
 
 def test_falls_back_to_nhk_when_yahoo_fails():
+    # Yahoo が失敗した場合、NHK にフォールバックして結果が返ること
     with (
         patch("traininfo.request.NHKClient") as MockNHK,
         patch("traininfo.request.YahooClient") as MockYahoo,
@@ -87,6 +91,7 @@ def test_falls_back_to_nhk_when_yahoo_fails():
 
 
 def test_yahoo_not_registered_without_app_id():
+    # yahoo_app_id が None の場合、Yahoo クライアントが登録されないこと
     with (
         patch("traininfo.request.NHKClient") as MockNHK,
         patch("traininfo.request.YahooClient") as MockYahoo,
