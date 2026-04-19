@@ -30,11 +30,12 @@ def test_partial_match():
 def test_nhk_code():
     # NHK コードが正しいステータスに変換されること
     assert status_normalizer(NHK_code="00") == "🚋平常運転"
-    assert status_normalizer(NHK_code="06") == "🚋平常運転"
     assert status_normalizer(NHK_code="01") == "🛑運転見合わせ"
     assert status_normalizer(NHK_code="02") == "🚋運転再開"
     assert status_normalizer(NHK_code="03") == "🕒ダイヤ乱れ"
     assert status_normalizer(NHK_code="04") == "🗒️運転計画"
+    # 05はまだ不明なコード。
+    assert status_normalizer(NHK_code="06") == "🚋平常運転"
     assert status_normalizer(NHK_code="07") == "⚠️その他"
     assert status_normalizer(NHK_code="08") == "⚠️その他"
 
@@ -42,6 +43,11 @@ def test_nhk_code():
 def test_nhk_unknown_code_falls_back_to_other():
     # 未知の NHK コードが「その他」に変換されること
     assert status_normalizer(NHK_code="99") == "⚠️その他"
+
+
+def test_status_used_when_nhk_code_missing():
+    # NHK_codeが存在しないがstatusは存在する場合、statusに基づいて正しいアイコン付きステータスが返ること
+    assert status_normalizer(status="交通障害情報", NHK_code="") == "🚧交通障害情報"
 
 
 def test_no_args_returns_other():
