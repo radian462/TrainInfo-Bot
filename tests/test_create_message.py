@@ -75,3 +75,33 @@ def test_none_to_incident():
     result = create_message(latest, previous)
     assert result is not None
     assert result[0] == "山手線 : 🚋平常運転➡️🚋遅延\n5分程度の遅れ"
+
+
+def test_message_splitting_by_width():
+    long_detail = "x" * 200
+    latest = (
+        TrainStatus(train="路線A", status="🕒列車遅延", detail=long_detail),
+        TrainStatus(train="路線B", status="🕒列車遅延", detail=long_detail),
+    )
+    previous = tuple()
+
+    result = create_message(latest, previous, width=300)
+
+    # Each message is ~219 chars; two together exceed 300, so they must split
+    assert len(result) == 2
+    for msg in result:
+        assert len(msg) <= 300
+
+
+def test_many_incidents_split_into_multiple_messages():
+    latest = tuple(
+        TrainStatus(train=f"路線{i:02d}", status="🕒列車遅延", detail="遅延が発生しています")
+        for i in range(10)
+    )
+    previous = tuple()
+
+    result = create_message(latest, previous, width=100)
+
+    assert len(result) > 1
+    for msg in result:
+        assert len(msg) <= 100
