@@ -9,7 +9,7 @@ from traininfo.trainstatus import TrainStatus
 
 
 class _ConcreteClient(BaseTrainInfoClient):
-    """BaseTrainInfoClient のテスト用具体実装"""
+    """Concrete implementation of BaseTrainInfoClient for testing."""
 
     def __init__(self, session, region, fetch_side_effect=None, fetch_return=None):
         super().__init__(session=session, region=region, retry_sleep=0, retry_times=3)
