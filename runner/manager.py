@@ -130,7 +130,10 @@ class RegionalManager:
         now = self._fetch_now_train_info()
         prev = self._fetch_prev_train_info(table_name=table_name)
 
-        if not now or not prev:
+        if not now:
+            return
+        if not prev:
+            self._save_latest_data(table_name=table_name, data=now)
             return
 
         messages = create_message(now, prev)
@@ -138,8 +141,8 @@ class RegionalManager:
             self.logger.info("No changes in train status")
             return
 
-        self._save_latest_data(table_name=table_name, data=now)
         self._post_messages(now, prev)
+        self._save_latest_data(table_name=table_name, data=now)
 
     def _get_table_name(self) -> str | None:
         """
