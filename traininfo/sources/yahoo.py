@@ -33,8 +33,7 @@ class YahooClient(BaseTrainInfoClient):
 
     def _fetch(self) -> Any:
         if not self.yahoo_app_id:
-            self.logger.error("Missing Yahoo App ID")
-            return None
+            raise ValueError("Yahoo App ID is not configured.")
 
         params = {
             "area": self.region.id,
