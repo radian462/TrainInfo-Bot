@@ -9,7 +9,7 @@ _DUMMY_STATUS = (TrainStatus(train="山手線", status="🚋平常運転", detai
 
 
 def test_request_returns_success():
-    # NHK クライアントが成功した場合、その結果が返ること
+    # Yahoo_app_idが渡されない場合かつ、NHKが成功した場合、その結果が返ること
     with patch("traininfo.request.NHKClient") as MockNHK:
         mock_nhk = MagicMock()
         MockNHK.return_value = mock_nhk
