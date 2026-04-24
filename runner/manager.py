@@ -66,16 +66,20 @@ class RegionalManager:
         bool
             すべてのクライアントが正常にログインできた場合はTrue、そうでない場合はFalse
         """
-        is_succeed: list[bool] = []
+        failed: list[Service] = []
 
         for service, client in self.clients.items():
             auth = self.get_auth(service, client.auth_type)
-            if auth is None:
-                is_succeed.append(False)
-                continue
-            is_succeed.append(client.login(*auth))
+            if auth is None or not client.login(*auth):
+                failed.append(service)
 
-        if all(is_succeed):
+        for service in failed:
+            self.logger.warning(
+                f"Skipping {service.label} for {self.region.label} due to login failure"
+            )
+            del self.clients[service]
+
+        if not failed:
             self.logger.info(f"All clients logged in for {self.region.label}")
             return True
 

@@ -96,18 +96,17 @@ class BaseTrainInfoClient(ABC):
             except requests.RequestException as e:
                 if hasattr(e, "response") and e.response is not None:
                     status = e.response.status_code
+                    is_retry, delay = self._status_exception_handler(status, e, i)
+
+                    if not is_retry:
+                        break
+
+                    if delay:
+                        self.logger.info(f"Retrying... ({i + 1}/{self.retry_times})")
+                        time.sleep(delay)
+                        continue
                 else:
-                    raise e
-
-                is_retry, delay = self._status_exception_handler(status, e, i)
-
-                if not is_retry:
-                    break
-
-                if delay:
-                    self.logger.info(f"Retrying... ({i + 1}/{self.retry_times})")
-                    time.sleep(delay)
-                    continue
+                    self.logger.warning(f"Network error (no response): {e}")
             except Exception as e:
                 self.logger.error(f"Error requesting: {e}")
 
